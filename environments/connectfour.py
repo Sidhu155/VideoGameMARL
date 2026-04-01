@@ -29,18 +29,30 @@ class ConnectFour:
             currAgent.update(reward, obs, action)
             self.env.step(action)
 
-        self.env.close()
+        self.env.reset()
 
     def runNumGames(self, agent0, agent1, numGames):
         for i in tqdm(range(numGames)):
             self.run(agent0, agent1)
-            self.env.reset()
 
     def get_action_spaces(self) -> list:
         return [
             self.env.action_space("player_0"),
             self.env.action_space("player_1")
         ]
+
+    def enable_rendering(self):
+        self.env.close()
+        self.env = connect_four_v3.env(render_mode="human")
+        self.env.reset()
+
+    def disable_rendering(self):
+        self.env.close()
+        self.env = connect_four_v3.env(render_mode=None)
+        self.env.reset()
+
+    def tear_down(self):
+        self.env.close()
 
     #https://stackoverflow.com/questions/10016352/convert-numpy-array-to-tuple
     def totuple(self, a):
