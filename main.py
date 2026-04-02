@@ -59,19 +59,15 @@ def writeToFile(object, filename='out_file'):
     with open(filename, 'wb') as outp:
         pickle.dump(object, outp, pickle.HIGHEST_PROTOCOL)
 
-def main(args: list[str] | None =  None):
-    environment, player, adversary, numTrain, numPlay = match_args(parse(args))
-
+def experiment1(environment, player, adversary, numTrain, numPlay):
     #environment.enable_rendering()
     environment.runNumGames(player, adversary, numTrain)
-    """
-    for x in adversary.q_values:
-        print(adversary.q_values[x])
-    """
     eval = Evaluator()
-    eval.plotMovingAverage(adversary.training_error, 10000)
+    eval.plotMovingAverage(adversary.training_error, 1000)
+    eval.plotMovingAverage(player.training_error, 1000)
     eval.show()
     if numPlay > 0:
+        adversary.disableLearning()
         temp_action_space = player.action_space
         player = PlayerAgent()
         player.set_up(temp_action_space)
@@ -79,6 +75,13 @@ def main(args: list[str] | None =  None):
         environment.runNumGames(player, adversary, numPlay)
         environment.disable_rendering()
     environment.tear_down()
+
+def experiment2(environment, player, adversary, numTrain, numPlay):
+    pass
+
+def main(args: list[str] | None =  None):
+    environment, player, adversary, numTrain, numPlay = match_args(parse(args))
+    experiment1(environment, player, adversary, numTrain, numPlay)
 
 
 if __name__ == "__main__":

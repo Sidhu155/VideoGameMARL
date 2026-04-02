@@ -41,17 +41,18 @@ class QLearnAgent(Agent):
             return self.action_space.sample(mask)
         else:
             max = None
-            maxIdx = []
-            q_value = self.q_values[obs]
-            for idx in range(len(mask)):
-                if mask[idx] == 0:
+            maxActions = []
+            for action in range(len(mask)):
+                if mask[action] == 0:
                     continue
-                elif max is None or max < q_value[idx]:
-                    max = q_value[idx]
-                    maxIdx = [idx]
-                elif max == q_value[idx]:
-                    maxIdx.append(idx)
-            return random.choice(maxIdx)
+                else:
+                    q = self.get_q_value(obs, action)
+                    if max is None or max < q:
+                        max = q
+                        maxActions = [action]
+                    elif max == q:
+                        maxActions.append(action)
+            return random.choice(maxActions)
 
     def update(self, reward: float, obs: tuple[int, int, bool], action: int):
         if self.learning and (self.prevObs is not None):
@@ -68,6 +69,12 @@ class QLearnAgent(Agent):
         
         self.prevObs = obs
         self.prevAction = action
+
+    def get_q_value(self, obs, action):
+        return self.q_values[obs][action]
+
+    def update_q_value(self, obs, action, new_q):
+        self.q_values[obs][action]= new_q
 
     def decay_epsilon(self):
         self.epsilon = max(self.final_epsilon, self.epsilon - self.epsilon_decay)
