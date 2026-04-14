@@ -1,4 +1,3 @@
-import sys
 import pytest
 from main import parse, match_args, main
 
