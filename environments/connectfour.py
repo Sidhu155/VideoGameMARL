@@ -6,7 +6,10 @@ import gymnasium as gym
 from tqdm import tqdm
 
 class ConnectFour(Environment):
-    """A wrapper class around the Connect Four classic environment from PettingZoo"""
+    """
+    A wrapper class around the Connect Four classic environment from PettingZoo.
+    Inherits from Environment class
+    """
 
     def __init__(self):
         super().__init__()

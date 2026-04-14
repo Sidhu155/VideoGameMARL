@@ -11,6 +11,16 @@ class Agent:
         self.record = []
         self.learning = True
 
+    def set_up(self, action_space):
+        """
+        Args:
+            action_space: The action_space that actions can be chosen from by the agent
+        
+        Performs any setting up required before the agent begins interaction with the environment.
+        """
+
+        self.action_space = action_space
+
     def get_action(self, obs, mask) -> int:
         """
         Args:
@@ -44,18 +54,8 @@ class Agent:
         Record cumulative reward achieved throughout environment episode.
         Also perform any end of episode processes
         """
-        
+
         self.record.append(reward)
-
-    def set_up(self, action_space):
-        """
-        Args:
-            action_space: The action_space that actions can be chosen from by the agent
-        
-        Performs any setting up required before the agent begins interaction with the environment.
-        """
-
-        self.action_space = action_space
 
     def enableLearning(self):
         """

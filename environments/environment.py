@@ -78,12 +78,12 @@ class Environment:
         """
         Destroy environment
         """
-        
+
         self.env.close()
 
     #https://stackoverflow.com/questions/10016352/convert-numpy-array-to-tuple
     def totuple(self, a):
         try:
             return tuple(self.totuple(i) for i in a)
-        except Exception:
+        except TypeError as e:
             return a
