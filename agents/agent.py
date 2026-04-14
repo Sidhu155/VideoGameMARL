@@ -8,7 +8,7 @@ class Agent:
         Initialise Agent. Enable learning and create record of wins.
         """
 
-        self.record = []
+        self.record: list[float] = []
         self.learning = True
 
     def set_up(self, action_space):
@@ -46,7 +46,7 @@ class Agent:
 
         pass
 
-    def final(self, reward):
+    def final(self, reward: float):
         """
         Args:
             reward: The cumulative reward for the episode
@@ -54,8 +54,12 @@ class Agent:
         Record cumulative reward achieved throughout environment episode.
         Also perform any end of episode processes
         """
-
-        self.record.append(reward)
+        try:
+            reward = float(reward)
+        except ValueError:
+            pass
+        else:
+            self.record.append(float(reward))
 
     def enableLearning(self):
         """
