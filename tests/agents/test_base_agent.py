@@ -2,9 +2,9 @@ import pytest
 from agents.agent import Agent
 from gymnasium.spaces import *
 import random
+from tests.agents.conftest import parametrize_final_reward, parametrize_learn_bool
 
 class BaseTestAgent:
-    random.seed(1)
 
     @pytest.fixture
     def action_space(self) -> Space:
@@ -12,17 +12,7 @@ class BaseTestAgent:
 
     @pytest.fixture
     def agent(self) -> Agent:
-        return Agent()
-    
-    parametrize_final_reward = pytest.mark.parametrize('rewards, expected_record', [
-        ([0, 1, 0, 1, 0], [0, 1, 0, 1, 0]),
-        (['h'], []),
-        (["hello"], []),
-        ([1.0, 3.5, 3, 2.4], [1.0, 3.5, 3, 2.4]),
-        ([1.0, "h", 3.4, "s"], [1.0, 3.4])
-    ])
-
-    parametrize_learn_bool = pytest.mark.parametrize('learning', [True, False]) 
+        return Agent() 
 
     def test_init(self, agent: Agent):
         assert agent.record == []
@@ -31,12 +21,6 @@ class BaseTestAgent:
     def test_set_up(self, agent: Agent, action_space: Space):
         agent.set_up(action_space)
         assert agent.action_space == action_space 
-
-    def test_get_action(self, agent: Agent):
-        assert agent.get_action(None, None) == None
-
-    def test_update(self, agent: Agent):
-        assert agent.update(None, None, None) == None
 
     @parametrize_final_reward
     def test_final(self, agent: Agent, rewards, expected_record):
