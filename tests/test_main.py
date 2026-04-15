@@ -9,10 +9,10 @@ from main import parse, match_args, main
         (None, True)
     ])
 @pytest.mark.parametrize("player, pbool", [
-        (["-p", "qAgent"], True),
+        (["-p", "qTab"], True),
         (["-p", "randAgent"], True),
         (["-p", "randAgen"], False),
-        (["--player", "qAgent"], True),
+        (["--player", "qTab"], True),
         (["--player", "randAgent"], True),
         (["--player", "randAgen"], False),
         (None, True)
