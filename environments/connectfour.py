@@ -19,7 +19,7 @@ class ConnectFour(Environment):
             observation, reward, termination, truncation, info = self.env.last()
             currAgent = agent0 if agent == "player_0" else agent1
 
-            obs = self.totuple(observation["observation"])
+            obs = observation["observation"]
             if termination or truncation:
                 obs = None
                 action = None
