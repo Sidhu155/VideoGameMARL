@@ -85,10 +85,3 @@ class Agent:
         """
 
         self.learning = False
-
-
-class BaseQValAgent(Agent):
-    pass
-
-class FuncApprox:
-    pass
