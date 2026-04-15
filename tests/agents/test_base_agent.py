@@ -1,16 +1,28 @@
 import pytest
 from agents.agent import Agent
 from gymnasium.spaces import *
+import random
 
-@pytest.fixture
-def action_space() -> Space:
-    return Discrete(4)
+class BaseTestAgent:
+    random.seed(1)
 
-@pytest.fixture
-def agent() -> Agent:
-    return Agent()
+    @pytest.fixture
+    def action_space(self) -> Space:
+        return Discrete(4)
 
-class TestBaseAgent:
+    @pytest.fixture
+    def agent(self) -> Agent:
+        return Agent()
+    
+    parametrize_final_reward = pytest.mark.parametrize('rewards, expected_record', [
+        ([0, 1, 0, 1, 0], [0, 1, 0, 1, 0]),
+        (['h'], []),
+        (["hello"], []),
+        ([1.0, 3.5, 3, 2.4], [1.0, 3.5, 3, 2.4]),
+        ([1.0, "h", 3.4, "s"], [1.0, 3.4])
+    ])
+
+    parametrize_learn_bool = pytest.mark.parametrize('learning', [True, False]) 
 
     def test_init(self, agent: Agent):
         assert agent.record == []
@@ -25,29 +37,24 @@ class TestBaseAgent:
 
     def test_update(self, agent: Agent):
         assert agent.update(None, None, None) == None
-    
-    @pytest.mark.parametrize('rewards, expected_record', [
-        ([0, 1, 0, 1, 0], [0, 1, 0, 1, 0]),
-        (['h'], []),
-        (["hello"], []),
-        ([1.0, 3.5, 3, 2.4], [1.0, 3.5, 3, 2.4]),
-        ([1.0, "h", 3.4, "s"], [1.0, 3.4])
-    ])
+
+    @parametrize_final_reward
     def test_final(self, agent: Agent, rewards, expected_record):
         for val in rewards:
             agent.final(val)
         assert agent.record == expected_record
 
-    parametrize_bool = pytest.mark.parametrize('learning', [True, False]) 
-
-    @parametrize_bool
+    @parametrize_learn_bool
     def test_enable_learning(self, agent: Agent, learning: bool):
         agent.learning = learning
         agent.enableLearning()
         assert agent.learning == True
 
-    @parametrize_bool
+    @parametrize_learn_bool
     def test_disable_learning(self, agent: Agent, learning: bool):
         agent.learning = learning
         agent.disableLearning()
         assert agent.learning == False
+
+class TestAgent(BaseTestAgent):
+    pass

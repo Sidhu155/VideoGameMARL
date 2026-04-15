@@ -1,3 +1,8 @@
+from collections import defaultdict
+from gymnasium.spaces import Space
+import numpy as np
+import random
+
 class Agent:
     """
     Base Agent class for interacting with an environment
@@ -11,17 +16,20 @@ class Agent:
         self.record: list[float] = []
         self.learning = True
 
-    def set_up(self, action_space):
+    def set_up(self, action_space: Space, seed: int | None = None):
         """
         Args:
             action_space: The action_space that actions can be chosen from by the agent
+            seed: This defines the seed for random sampling from the action_space.
         
         Performs any setting up required before the agent begins interaction with the environment.
+        Seeds action space if seed is provided.
         """
 
         self.action_space = action_space
+        self.action_space.seed(seed)
 
-    def get_action(self, obs, mask) -> int:
+    def get_action(self, obs: tuple, mask) -> int:
         """
         Args:
             obs: The current observation
@@ -77,3 +85,10 @@ class Agent:
         """
 
         self.learning = False
+
+
+class BaseQValAgent(Agent):
+    pass
+
+class FuncApprox:
+    pass
