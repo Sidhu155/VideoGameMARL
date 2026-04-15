@@ -100,7 +100,7 @@ class QLearnAgent(Agent):
 
     def decay(self):
         self.epsilon = max(self.final_epsilon, self.epsilon - self.epsilon_decay)
-        self.learning_rate = max(self.final_lr, self.lr - self.lr_decay)
+        self.lr = max(self.final_lr, self.lr - self.lr_decay)
 
     def getDefaultVals(self):
         return np.array(list(0.0 for _ in range(self.numActions)), dtype=np.float16)
