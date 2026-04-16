@@ -23,3 +23,10 @@ parametrize_get_action = pytest.mark.parametrize('q_vals, mask, expected_max, ex
 ])
 
 parametrize_epsilon = pytest.mark.parametrize('epsilon', [0.6, 0.9])
+
+parametrize_q_table = pytest.mark.parametrize('obs, utilities, action, action_util, max_util, new_util', [
+    (np.array([0, 1, 1, 0]), np.array([0.0, 1.0, -1.0, 3.0]), 0, 0.0, 3.0, 10.0),
+    (np.array([0, 1, 1, 0]), np.array([0.0, 1.0, -1.0, 3.0]), 1, 1.0, 3.0, 100.0),
+    (np.array([0, 1, 1, 0]), np.array([0.0, 1.0, -1.0, 3.0]), 2, -1.0, 3.0, -1000.0),
+    (np.array([0, 1, 1, 0]), np.array([0.0, 1.0, -1.0, 3.0]), 3, 3.0, 3.0, 0.573645),
+])

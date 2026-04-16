@@ -5,7 +5,6 @@ import numpy as np
 from tests.agents.conftest import parametrize_final_reward, parametrize_learn_bool
 
 class BaseTestAgent:
-    seed_val = 155
 
     @pytest.fixture
     def action_space(self) -> Space:
@@ -17,7 +16,7 @@ class BaseTestAgent:
     
     @pytest.fixture
     def set_up_agent(self, agent: Agent, action_space: Space) -> Agent:
-        agent.set_up(action_space, seed=self.seed_val)
+        agent.set_up(action_space, seed=self.get_seed_val())
         return agent
 
     def test_init(self, agent: Agent):
@@ -30,7 +29,7 @@ class BaseTestAgent:
         assert agent.action_space == action_space 
 
     @parametrize_final_reward
-    def test_final(self, set_up_agent: Agent, rewards, expected_record):
+    def test_final(self, set_up_agent: Agent, rewards: list[float], expected_record: list[float]):
         for val in rewards:
             set_up_agent.final(val)
         assert set_up_agent.record == expected_record
@@ -61,6 +60,9 @@ class BaseTestAgent:
         agent.learning = learning
         agent.disableLearning()
         assert agent.learning == False
+
+    def get_seed_val(self) -> int:
+        return 155
 
 class TestAgent(BaseTestAgent):
     pass
