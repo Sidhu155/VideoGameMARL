@@ -88,7 +88,6 @@ class TestQTabularAgent(BaseTestAgent):
 
         set_up_agent.update(reward, obs, action)
         assert set_up_agent.q_values[prevObs.tobytes()][prevAction] == 2.57
-        print(set_up_agent.prevObs)
         assert np.array_equal(set_up_agent.prevObs, obs)
         assert set_up_agent.prevAction == action
 

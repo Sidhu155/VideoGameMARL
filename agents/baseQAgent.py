@@ -44,7 +44,7 @@ class BaseQValAgent(Agent):
                action_space: Space,
                observation_space: Space | None = None,
                seed=None):
-        super().set_up(action_space, seed)
+        super().set_up(action_space, seed=seed)
         self.numActions = action_space.n
 
     def get_action(self, obs: tuple, mask) -> int:
@@ -113,8 +113,11 @@ class Tabular(BaseQValAgent):
     Converts observations to bytes and adds to a dictionary with action utilities
     """
 
-    def set_up(self, action_space: Space, seed=None):
-        super().set_up(action_space, seed)
+    def set_up(self,
+               action_space: Space,
+               observation_space: Space | None = None,
+               seed=None):
+        super().set_up(action_space, seed=seed)
         self.q_values = defaultdict(self.getDefaultVals)
 
     def get_q_value(self, obs, action) -> float:
