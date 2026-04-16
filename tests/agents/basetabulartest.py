@@ -1,10 +1,10 @@
 import pytest
-from tests.agents.test_base_agent import BaseTestAgent
-from agents.baseQAgent import Tabular
-from gymnasium.spaces import Space
 import numpy as np
 import random
 from collections import defaultdict
+from gymnasium.spaces import Space
+from tests.agents.test_base_agent import BaseTestAgent
+from agents.baseQAgent import Tabular
 from tests.agents.conftest import (
     parametrize_final_reward, parametrize_get_action, parametrize_epsilon,
     parametrize_q_table
