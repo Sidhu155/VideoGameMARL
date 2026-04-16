@@ -1,12 +1,13 @@
 import sys
+import torch
+import pickle
 from argparse import ArgumentParser
 from environments import connectfour
-from agents.qLearnAgent import QLearnAgent
+from agents.qAgents import QTabAgent, QFuncApproxAgent
+from agents.sarsaAgents import SARSATabAgent, SARSAFuncApproxAgent
 from agents.randomAgent import RandomAgent
 from agents.playerAgent import PlayerAgent
-import torch
 from evaluator import Evaluator
-import pickle
 
 def parse(args: list[str] | None = None):
     parser = ArgumentParser()
@@ -26,8 +27,14 @@ def match_args(args):
     
 
     match args.playerAgent:
-        case "qAgent":
-            player = QLearnAgent()
+        case "qTab":
+            player = QTabAgent()
+        case "sarsaTab":
+            player = SARSATabAgent()
+        case "qFunc":
+            player = QFuncApproxAgent()
+        case "sarsaFunc":
+            player = SARSAFuncApproxAgent()
         case "playerAgent":
             player = PlayerAgent()
         case "randAgent" | None:
@@ -36,8 +43,14 @@ def match_args(args):
             raise Exception("Please input a valid player agent")
 
     match args.adversaryAgent:
-        case "qAgent":
-            adversary = QLearnAgent()
+        case "qTab":
+            adversary = QTabAgent()
+        case "sarsaTab":
+            adversary = SARSATabAgent()
+        case "qFunc":
+            adversary = QFuncApproxAgent()
+        case "sarsaFunc":
+            adversary = SARSAFuncApproxAgent()
         case "randAgent" | None:
             adversary = RandomAgent()
         case _:
@@ -63,8 +76,10 @@ def experiment1(environment, player, adversary, numTrain, numPlay):
     #environment.enable_rendering()
     environment.runNumGames(player, adversary, numTrain)
     eval = Evaluator()
-    eval.plotMovingAverage(adversary.training_error, 1000)
-    eval.plotMovingAverage(player.training_error, 1000)
+    print(adversary.num_updates)
+    print(len(adversary.q_values))
+    eval.plotMovingAverage(adversary.record, 1000)
+    eval.plotMovingAverage(player.record, 1000)
     eval.show()
     if numPlay > 0:
         adversary.disableLearning()
@@ -80,6 +95,7 @@ def experiment2(environment, player, adversary, numTrain, numPlay):
     pass
 
 def main(args: list[str] | None =  None):
+    torch.set_default_device('mps')
     environment, player, adversary, numTrain, numPlay = match_args(parse(args))
     experiment1(environment, player, adversary, numTrain, numPlay)
 
