@@ -50,9 +50,9 @@ class TestQTabularAgent(BaseTestAgent):
         random.seed(self.seed_val)
         np.random.seed(self.seed_val)
         
-        obs = (0, 1, 3, 2, 4)
+        obs = np.array((0, 1, 3, 2, 4))
         set_up_agent.epsilon = epsilon
-        set_up_agent.q_values[obs] = q_vals
+        set_up_agent.q_values[obs.tobytes()] = q_vals
         
         action = set_up_agent.get_action(obs, mask)
         if epsilon < 0.7:
@@ -65,78 +65,79 @@ class TestQTabularAgent(BaseTestAgent):
     def test_get_action_learning_disabled(self, set_up_agent: QTabAgent, q_vals, mask, expected_max, expected_rand, epsilon):
         random.seed(self.seed_val)
         np.random.seed(self.seed_val)
-        obs = (0, 1, 3, 2, 4)
+        obs = np.array((0, 1, 3, 2, 4))
         set_up_agent.disableLearning()
         set_up_agent.epsilon = epsilon
-        set_up_agent.q_values[obs] = q_vals
+        set_up_agent.q_values[obs.tobytes()] = q_vals
         action = set_up_agent.get_action(obs, mask)
         assert action == expected_max
 
     def test_update(self, set_up_agent: QTabAgent):
-        prevObs = (0, 1, 2, 3, 4)
+        prevObs = np.array((0, 1, 2, 3, 4))
         prevAction = 1
         prevUtility = 0
         reward = 10
-        obs = (0, 1, 3, 2, 4)
+        obs = np.array((0, 1, 3, 2, 4))
         obs_q_vals = [0.0, 1.0, -1.0, 3.0]
         action = 2
 
         set_up_agent.prevObs = prevObs
         set_up_agent.prevAction = prevAction
-        set_up_agent.q_values[prevObs][prevAction] = prevUtility
-        set_up_agent.q_values[obs] = obs_q_vals
+        set_up_agent.q_values[prevObs.tobytes()][prevAction] = prevUtility
+        set_up_agent.q_values[obs.tobytes()] = obs_q_vals
 
         set_up_agent.update(reward, obs, action)
-        assert set_up_agent.q_values[prevObs][prevAction] == 2.57
-        assert set_up_agent.prevObs == obs
+        assert set_up_agent.q_values[prevObs.tobytes()][prevAction] == 2.57
+        print(set_up_agent.prevObs)
+        assert np.array_equal(set_up_agent.prevObs, obs)
         assert set_up_agent.prevAction == action
 
     def test_update_learning_disabled(self, set_up_agent: QTabAgent):
         set_up_agent.disableLearning()
-        prevObs = (0, 1, 2, 3, 4)
+        prevObs = np.array((0, 1, 2, 3, 4))
         prevAction = 1
         prevUtility = 0
         reward = 10
-        obs = (0, 1, 3, 2, 4)
+        obs = np.array((0, 1, 3, 2, 4))
         obs_q_vals = [0.0, 1.0, -1.0, 3.0]
         action = 2
 
         set_up_agent.prevObs = prevObs
         set_up_agent.prevAction = prevAction
-        set_up_agent.q_values[prevObs][prevAction] = prevUtility
-        set_up_agent.q_values[obs] = obs_q_vals
+        set_up_agent.q_values[prevObs.tobytes()][prevAction] = prevUtility
+        set_up_agent.q_values[obs.tobytes()] = obs_q_vals
 
         set_up_agent.update(reward, obs, action)
-        assert set_up_agent.q_values[prevObs][prevAction] == 0
-        assert set_up_agent.prevObs == obs
+        assert set_up_agent.q_values[prevObs.tobytes()][prevAction] == 0
+        assert np.array_equal(set_up_agent.prevObs, obs)
         assert set_up_agent.prevAction == action
 
     def test_update_none_prev_act_obs(self, set_up_agent: QTabAgent):
         reward = 10
-        obs = (0, 1, 3, 2, 4)
+        obs = np.array((0, 1, 3, 2, 4))
         obs_q_vals = [0.0, 1.0, -1.0, 3.0]
         action = 2
 
-        set_up_agent.q_values[obs] = obs_q_vals
-        prev_q_values = {obs: obs_q_vals}
+        set_up_agent.q_values[obs.tobytes()] = obs_q_vals
+        prev_q_values = {obs.tobytes(): obs_q_vals}
 
         set_up_agent.update(reward, obs, action)
         assert set_up_agent.q_values == prev_q_values
-        assert set_up_agent.prevObs == obs
+        assert np.array_equal(set_up_agent.prevObs, obs)
         assert set_up_agent.prevAction == action
 
     def test_update_none_curr_obs_act(self, set_up_agent: QTabAgent):
-        prevObs = (0, 1, 2, 3, 4)
+        prevObs = np.array((0, 1, 2, 3, 4))
         prevAction = 1
         prevUtility = 0
         reward = 10
 
         set_up_agent.prevObs = prevObs
         set_up_agent.prevAction = prevAction
-        set_up_agent.q_values[prevObs][prevAction] = prevUtility
+        set_up_agent.q_values[prevObs.tobytes()][prevAction] = prevUtility
 
         set_up_agent.update(reward, None, None)
-        assert set_up_agent.q_values[prevObs][prevAction] == 2
+        assert set_up_agent.q_values[prevObs.tobytes()][prevAction] == 2
         assert set_up_agent.prevObs == None
         assert set_up_agent.prevAction == None
 
