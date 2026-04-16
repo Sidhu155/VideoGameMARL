@@ -8,11 +8,11 @@ class BaseQValAgent(Agent):
     def __init__(
         self,
         learning_rate: float = 0.2,
-        epsilon: float = 0.1,
+        epsilon: float = 0.2,
         learning_decay: float = 0.0,
-        epsilon_decay: float = 0.0001,
+        epsilon_decay: float = 0.000002,
         final_learning_rate: float = 0.2,
-        final_epsilon: float = 0.001,
+        final_epsilon: float = 0.05,
         discount_factor: float = 0.95
     ):
         """Initialize a Q-Learning agent.
@@ -40,7 +40,10 @@ class BaseQValAgent(Agent):
 
         self.num_updates = 0
 
-    def set_up(self, action_space: Space, seed=None):
+    def set_up(self,
+               action_space: Space,
+               observation_space: Space | None = None,
+               seed=None):
         super().set_up(action_space, seed)
         self.numActions = action_space.n
 
@@ -105,20 +108,24 @@ class FuncApprox:
     pass
 
 class Tabular(BaseQValAgent):
+    """
+    Tabular q-value based agent
+    Converts observations to bytes and adds to a dictionary with action utilities
+    """
 
     def set_up(self, action_space: Space, seed=None):
         super().set_up(action_space, seed)
         self.q_values = defaultdict(self.getDefaultVals)
 
     def get_q_value(self, obs, action) -> float:
-        return self.q_values[obs][action]
+        return self.q_values[obs.tobytes()][action]
 
     def get_max_q_value(self, obs) -> float:
-        return np.max(self.q_values[obs])
+        return np.max(self.q_values[obs.tobytes()])
     
     def update_q_value(self, obs, action, new_q: float):
         super().update_q_value(obs, action, new_q)
-        self.q_values[obs][action]= new_q
+        self.q_values[obs.tobytes()][action]= new_q
 
     def getDefaultVals(self):
         return np.array(list(0.0 for _ in range(self.numActions)), dtype=np.float16)
