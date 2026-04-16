@@ -2,7 +2,7 @@ from collections import defaultdict
 from gymnasium.spaces import Space
 import numpy as np
 import random
-from .agent import Agent
+from .agent import Agent, assert_agent_set_up
 
 class BaseQValAgent(Agent):
     def __init__(
@@ -47,6 +47,7 @@ class BaseQValAgent(Agent):
         super().set_up(action_space, seed=seed)
         self.numActions = action_space.n
 
+    @assert_agent_set_up
     def get_action(self, obs: tuple, mask) -> int:
         if (self.learning) and (np.random.random() < self.epsilon):
             return self.action_space.sample(mask)
@@ -65,6 +66,7 @@ class BaseQValAgent(Agent):
                         maxActions.append(action)
             return random.choice(maxActions)
 
+    @assert_agent_set_up
     def update(self, reward: float, obs: tuple, action: int):
         if self.learning and (self.prevObs is not None):
             next_q = self.get_next_q(obs, action)
@@ -80,26 +82,32 @@ class BaseQValAgent(Agent):
         self.prevObs = obs
         self.prevAction = action
 
+    @assert_agent_set_up
     def final(self, reward):
         super().final(reward)
         self.decay()
 
+    @assert_agent_set_up
     def get_q_value(self, obs, action) -> float:
         pass
 
+    @assert_agent_set_up
     def get_max_q_value(self, obs) -> float:
         pass
-    
+
+    @assert_agent_set_up
     def update_q_value(self, obs, action, new_q: float):
         self.num_updates += 1
 
+    @assert_agent_set_up
     def get_next_q(self, obs, action):
         pass
-    
+
     def decay(self):
         self.epsilon = max(self.final_epsilon, self.epsilon - self.epsilon_decay)
         self.lr = max(self.final_lr, self.lr - self.lr_decay)
 
+    @assert_agent_set_up
     def get_next_q(self, obs, action):
         pass
         
@@ -120,15 +128,19 @@ class Tabular(BaseQValAgent):
         super().set_up(action_space, seed=seed)
         self.q_values = defaultdict(self.getDefaultVals)
 
+    @assert_agent_set_up
     def get_q_value(self, obs, action) -> float:
         return self.q_values[obs.tobytes()][action]
 
+    @assert_agent_set_up
     def get_max_q_value(self, obs) -> float:
         return np.max(self.q_values[obs.tobytes()])
     
+    @assert_agent_set_up
     def update_q_value(self, obs, action, new_q: float):
         super().update_q_value(obs, action, new_q)
         self.q_values[obs.tobytes()][action]= new_q
 
+    @assert_agent_set_up
     def getDefaultVals(self):
         return np.array(list(0.0 for _ in range(self.numActions)), dtype=np.float16)

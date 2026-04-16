@@ -23,11 +23,6 @@ class TestQTabularAgent(BaseTestAgent):
             final_epsilon=0.001,
             discount_factor=0.95
         )
-    
-    @pytest.fixture
-    def set_up_agent(self, agent: QTabAgent, action_space: Space) -> QTabAgent:
-        agent.set_up(action_space, seed=self.seed_val)
-        return agent
 
     def test_init(self, agent: QTabAgent):
         super().test_init(agent)
@@ -141,10 +136,10 @@ class TestQTabularAgent(BaseTestAgent):
         assert set_up_agent.prevAction == None
 
     @parametrize_final_reward
-    def test_final(self, agent: QTabAgent, rewards, expected_record):
-        super().test_final(agent, rewards, expected_record)
-        assert pytest.approx(agent.epsilon) == 0.1 - (len(rewards) * 0.0001)
-        assert pytest.approx(agent.lr) == 0.2 - (len(rewards) * 0.0002)
+    def test_final(self, set_up_agent: QTabAgent, rewards, expected_record):
+        super().test_final(set_up_agent, rewards, expected_record)
+        assert pytest.approx(set_up_agent.epsilon) == 0.1 - (len(rewards) * 0.0001)
+        assert pytest.approx(set_up_agent.lr) == 0.2 - (len(rewards) * 0.0002)
         
     def test_get_q_val(self, set_up_agent: QTabAgent):
         pass

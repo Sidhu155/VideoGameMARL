@@ -3,6 +3,14 @@ from gymnasium.spaces import Space
 import numpy as np
 import random
 
+def assert_agent_set_up(func):
+    def decorator(obj, *args, **kwargs):
+        if obj.set_up_bool:
+            return func(obj, *args, **kwargs)
+        else:
+            raise Exception("Agent has not been set up!")
+    return decorator
+
 class Agent:
     """
     Base Agent class for interacting with an environment
@@ -15,7 +23,8 @@ class Agent:
 
         self.record: list[float] = []
         self.learning = True
-
+        self.set_up_bool = False
+    
     def set_up(self,
                action_space: Space, 
                observation_space: Space | None = None,
@@ -31,7 +40,9 @@ class Agent:
 
         self.action_space = action_space
         self.action_space.seed(seed)
+        self.set_up_bool = True
 
+    @assert_agent_set_up
     def get_action(self, obs: tuple, mask) -> int:
         """
         Args:
@@ -43,7 +54,8 @@ class Agent:
         """
 
         pass
-
+    
+    @assert_agent_set_up
     def update(self, reward, obs, action):
         """
         Args:
@@ -57,6 +69,7 @@ class Agent:
 
         pass
 
+    @assert_agent_set_up
     def final(self, reward: float):
         """
         Args:
