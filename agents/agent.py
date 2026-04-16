@@ -28,7 +28,7 @@ class Agent:
     def set_up(self,
                action_space: Space, 
                observation_space: Space | None = None,
-               seed: int | None = None):
+               seed: int | None = None) -> None:
         """
         Args:
             action_space: The action_space that actions can be chosen from by the agent
@@ -43,7 +43,7 @@ class Agent:
         self.set_up_bool = True
 
     @assert_agent_set_up
-    def get_action(self, obs: tuple, mask) -> int:
+    def get_action(self, obs: np.ndarray, mask: np.ndarray) -> int:
         """
         Args:
             obs: The current observation
@@ -56,7 +56,7 @@ class Agent:
         pass
     
     @assert_agent_set_up
-    def update(self, reward, obs, action):
+    def update(self, reward: float, obs: np.ndarray, action: int) -> None:
         """
         Args:
             reward: The reward received for taking the previous action and observation
@@ -70,7 +70,7 @@ class Agent:
         pass
 
     @assert_agent_set_up
-    def final(self, reward: float):
+    def final(self, reward: float) -> None:
         """
         Args:
             reward: The cumulative reward for the episode
@@ -85,7 +85,7 @@ class Agent:
         else:
             self.record.append(float(reward))
 
-    def enableLearning(self):
+    def enableLearning(self) -> None:
         """
         Enable Learning.
         This allows the agent to update itself based on information from the environment
@@ -93,7 +93,7 @@ class Agent:
 
         self.learning = True
 
-    def disableLearning(self):
+    def disableLearning(self) -> None:
         """
         Disable Learning.
         Agents no longer update themselves based on information received from the environment.
