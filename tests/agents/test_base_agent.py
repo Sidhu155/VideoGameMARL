@@ -65,4 +65,17 @@ class BaseTestAgent:
         return 155
 
 class TestAgent(BaseTestAgent):
-    pass
+    
+    def test_get_action(self, set_up_agent: Agent, action_space: Space):
+        assert set_up_agent.get_action(np.array([0, 1, 1, 0]), np.array([0, 0, 1, 1])) == None
+        assert set_up_agent.action_space == action_space
+        assert set_up_agent.learning
+        assert set_up_agent.record == []
+        assert set_up_agent.set_up_bool
+
+    def test_update(self, set_up_agent: Agent, action_space: Space):
+        assert set_up_agent.update(10.0, np.array([0, 1, 1, 0]), 1) == None
+        assert set_up_agent.action_space == action_space
+        assert set_up_agent.learning
+        assert set_up_agent.record == []
+        assert set_up_agent.set_up_bool
