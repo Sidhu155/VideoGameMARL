@@ -1,12 +1,12 @@
 import pytest
 from agents.agent import Agent
 from gymnasium.spaces import *
-import random
+import numpy as np
 from tests.agents.conftest import parametrize_final_reward, parametrize_learn_bool
 
 class BaseTestAgent:
     seed_val = 155
-    
+
     @pytest.fixture
     def action_space(self) -> Space:
         return Discrete(4)
@@ -35,6 +35,21 @@ class BaseTestAgent:
             set_up_agent.final(val)
         assert set_up_agent.record == expected_record
 
+    def test_final_without_set_up(self, agent: Agent):
+        with pytest.raises(Exception) as excp:
+            agent.final(10.0)
+        assert "Agent has not been set up!" in str(excp.value)
+
+    def test_get_action_without_set_up(self, agent: Agent):
+        with pytest.raises(Exception) as excp:
+            agent.get_action(np.array((0, 1, 1, 0)), np.array((0, 0, 0, 1)))
+        assert "Agent has not been set up!" in str(excp.value)
+
+    def test_update_without_set_up(self, agent: Agent):
+        with pytest.raises(Exception) as excp:
+            agent.update(10, np.array((0, 1, 1, 0)), 1)
+        assert "Agent has not been set up!" in str(excp.value)
+    
     @parametrize_learn_bool
     def test_enable_learning(self, agent: Agent, learning: bool):
         agent.learning = learning
