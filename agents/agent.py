@@ -16,7 +16,10 @@ class Agent:
         self.record: list[float] = []
         self.learning = True
 
-    def set_up(self, action_space: Space, seed: int | None = None):
+    def set_up(self,
+               action_space: Space, 
+               observation_space: Space | None = None,
+               seed: int | None = None):
         """
         Args:
             action_space: The action_space that actions can be chosen from by the agent
