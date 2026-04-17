@@ -50,6 +50,17 @@ class Environment:
             self.env.action_space("player_0"),
             self.env.action_space("player_1")
         ]
+
+    def get_observation_spaces(self) -> list:
+        """
+        Returns:
+            List of observation spaces for each player
+        """
+
+        return [
+            self.env.observation_space("player_0")["observation"],
+            self.env.observation_space("player_1")["observation"]
+        ]
     
     def enable_rendering(self):
         """
