@@ -1,7 +1,7 @@
 import pytest
-from agents.agent import Agent
-from gymnasium.spaces import *
 import numpy as np
+from gymnasium.spaces import Space, Discrete
+from agents.agent import Agent
 from tests.agents.conftest import parametrize_final_reward, parametrize_learn_bool
 
 class BaseTestAgent:
