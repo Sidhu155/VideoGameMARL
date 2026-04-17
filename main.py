@@ -63,8 +63,9 @@ def match_args(args):
         raise Exception("Number of play games cannot be negative")
         
     action_space = environment.get_action_spaces()
-    player.set_up(action_space[0])
-    adversary.set_up(action_space[1])
+    observation_space = environment.get_observation_spaces()
+    player.set_up(action_space[0], observation_space[0])
+    adversary.set_up(action_space[1], observation_space[1])
 
     return environment, player, adversary, args.numTrain, args.numPlay
 
@@ -76,10 +77,7 @@ def experiment1(environment, player, adversary, numTrain, numPlay):
     #environment.enable_rendering()
     environment.runNumGames(player, adversary, numTrain)
     eval = Evaluator()
-    print(adversary.num_updates)
-    print(len(adversary.q_values))
-    eval.plotMovingAverage(adversary.record, 1000)
-    eval.plotMovingAverage(player.record, 1000)
+    eval.plotMovingAverage(adversary.training_error, 1000)
     eval.show()
     if numPlay > 0:
         adversary.disableLearning()
