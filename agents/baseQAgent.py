@@ -76,9 +76,8 @@ class BaseQValAgent(Agent):
             
             target = reward + (self.discount_factor * next_q)
             temporal_difference = target - curr_q
-            new_q = curr_q + (self.lr * temporal_difference)
-            
-            self.update_q_value(self.prevObs, self.prevAction, new_q)
+            self.update_q_value(curr_q, temporal_difference)
+
             self.training_error.append(temporal_difference)
         
         self.prevObs = obs
@@ -98,7 +97,7 @@ class BaseQValAgent(Agent):
         pass
 
     @assert_agent_set_up
-    def update_q_value(self, obs: np.ndarray, action: int, new_q: float) -> None:
+    def update_q_value(self, curr_q: float, temporal_difference: float) -> None:
         self.num_updates += 1
 
     @assert_agent_set_up
@@ -138,23 +137,6 @@ class FuncApprox(BaseQValAgent):
         self.q_function = self.getDefaultFunc()
 
     @assert_agent_set_up
-    def update(self, reward: float, obs: np.ndarray, action: int) -> None:
-        if self.learning and (self.prevObs is not None):
-            next_q = self.get_next_q(obs, action)
-            curr_q = self.get_q_value(self.prevObs, self.prevAction)
-            
-            target = reward + (self.discount_factor * next_q)
-            temporal_difference = target - curr_q
-            
-            obs_vector = self.obs_to_feature_vector(self.prevObs, self.prevAction)
-            self.q_function += (obs_vector * (self.lr * temporal_difference))
-            
-            self.training_error.append(temporal_difference)
-        
-        self.prevObs = obs
-        self.prevAction = action
-
-    @assert_agent_set_up
     def get_q_value(self, obs: np.ndarray, action: int) -> float:
         vector = self.obs_to_feature_vector(obs, action)
         return vector @ self.q_function
@@ -162,6 +144,12 @@ class FuncApprox(BaseQValAgent):
     @assert_agent_set_up
     def get_max_q_value(self, obs: np.ndarray) -> float:
         return max(self.get_q_value(obs, action) for action in range(self.numActions))
+    
+    @assert_agent_set_up
+    def update_q_value(self, curr_q: float, temporal_difference: float) -> None:
+        super().update_q_value(curr_q, temporal_difference)
+        obs_vector = self.obs_to_feature_vector(self.prevObs, self.prevAction)
+        self.q_function += (obs_vector * (self.lr * temporal_difference))
 
     def obs_to_feature_vector(self, obs: np.ndarray, action: int) -> np.ndarray:
         obs_vector = np.ravel(obs)
@@ -212,9 +200,10 @@ class Tabular(BaseQValAgent):
         return np.max(self.q_values[obs.tobytes()])
     
     @assert_agent_set_up
-    def update_q_value(self, obs: np.ndarray, action: int, new_q: float):
-        super().update_q_value(obs, action, new_q)
-        self.q_values[obs.tobytes()][action]= new_q
+    def update_q_value(self, curr_q: float, temporal_difference: float) -> None:
+        super().update_q_value(curr_q, temporal_difference)
+        new_q = curr_q + (self.lr * temporal_difference)
+        self.q_values[self.prevObs.tobytes()][self.prevAction]= new_q
 
     @assert_agent_set_up
     def getDefaultVals(self) -> np.ndarray:
