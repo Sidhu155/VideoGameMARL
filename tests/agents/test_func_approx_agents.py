@@ -4,7 +4,7 @@ from tests.agents.basefunctiontest import BaseTestFuncApprox
 from agents.qAgents import QFuncApproxAgent
 from agents.sarsaAgents import SARSAFuncApproxAgent
 
-class TestQTabularAgent(BaseTestFuncApprox):
+class TestQFuncApproxAgent(BaseTestFuncApprox):
 
     @pytest.fixture
     def agent(self) -> QFuncApproxAgent:
