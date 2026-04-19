@@ -4,6 +4,7 @@ import numpy as np
 class QLearnMixin:
     
     def get_next_q(self, obs: np.ndarray, action: int) -> float:
+        super().get_next_q(obs, action)
         if obs is None:
             return 0
         else:
