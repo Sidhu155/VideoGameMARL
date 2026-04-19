@@ -33,7 +33,6 @@ class Agent:
         Initialise Agent. Enable learning and create record of wins.
         """
 
-        self.record: list[float] = []
         self.learning = True
         self.set_up_bool = False
         self.logger: defaultdict = defaultdict(lambda: [])
@@ -94,9 +93,9 @@ class Agent:
         try:
             reward = float(reward)
         except ValueError:
-            pass
+            raise ValueError(f"Final episode reward not a float value. Actual Type: {type(reward)}. Reward: {reward}")
         else:
-            self.record.append(float(reward))
+            self.logger["record"].append(float(reward))
 
     def enableLearning(self) -> None:
         """

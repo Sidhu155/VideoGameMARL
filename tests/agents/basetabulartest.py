@@ -110,8 +110,8 @@ class BaseTestTabular(BaseTestAgent):
     @parametrize_final_reward
     def test_final(self, set_up_agent: Tabular, rewards, expected_record):
         super().test_final(set_up_agent, rewards, expected_record)
-        assert pytest.approx(set_up_agent.epsilon) == 0.1 - (len(rewards) * 0.0001)
-        assert pytest.approx(set_up_agent.lr) == 0.2 - (len(rewards) * 0.0002)
+        assert pytest.approx(set_up_agent.epsilon) == 0.1 - (len(expected_record) * 0.0001)
+        assert pytest.approx(set_up_agent.lr) == 0.2 - (len(expected_record) * 0.0002)
 
     @parametrize_q_table   
     def test_get_q_val(self, set_up_agent: Tabular, obs, utilities, action, action_util, max_util, new_util):
