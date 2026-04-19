@@ -2,7 +2,7 @@ from collections import defaultdict
 from gymnasium.spaces import Space
 import numpy as np
 import random
-from .agent import Agent, assert_agent_set_up
+from .agent import Agent, assert_agent_set_up, time_func
 
 class BaseQValAgent(Agent):
     def __init__(
@@ -49,6 +49,7 @@ class BaseQValAgent(Agent):
         super().set_up(action_space, seed=seed)
         self.numActions = action_space.n
 
+    @time_func("get_action")
     @assert_agent_set_up
     def get_action(self, obs: np.ndarray, mask: np.ndarray) -> int:
         if (self.learning) and (np.random.random() < self.epsilon):
@@ -68,6 +69,7 @@ class BaseQValAgent(Agent):
                         maxActions.append(action)
             return random.choice(maxActions)
 
+    @time_func("update")
     @assert_agent_set_up
     def update(self, reward: float, obs: np.ndarray, action: int) -> None:
         if self.learning and (self.prevObs is not None):
@@ -136,6 +138,7 @@ class FuncApprox(BaseQValAgent):
         self.numFeatures = np.prod(observation_space.shape)
         self.q_function = self.getDefaultFunc()
 
+    @time_func("get_q_value")
     @assert_agent_set_up
     def get_q_value(self, obs: np.ndarray, action: int) -> float:
         vector = self.obs_to_feature_vector(obs, action)
@@ -145,6 +148,7 @@ class FuncApprox(BaseQValAgent):
     def get_max_q_value(self, obs: np.ndarray) -> float:
         return max(self.get_q_value(obs, action) for action in range(self.numActions))
     
+    @time_func("update_q_value")
     @assert_agent_set_up
     def update_q_value(self, curr_q: float, temporal_difference: float) -> None:
         super().update_q_value(curr_q, temporal_difference)
@@ -191,6 +195,7 @@ class Tabular(BaseQValAgent):
         super().set_up(action_space, seed=seed)
         self.q_values = defaultdict(self.getDefaultVals)
 
+    @time_func("get_q_value")
     @assert_agent_set_up
     def get_q_value(self, obs: np.ndarray, action: int) -> float:
         return self.q_values[obs.tobytes()][action]
@@ -199,6 +204,7 @@ class Tabular(BaseQValAgent):
     def get_max_q_value(self, obs: np.ndarray) -> float:
         return np.max(self.q_values[obs.tobytes()])
     
+    @time_func("update_q_value")
     @assert_agent_set_up
     def update_q_value(self, curr_q: float, temporal_difference: float) -> None:
         super().update_q_value(curr_q, temporal_difference)

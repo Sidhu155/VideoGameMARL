@@ -2,6 +2,7 @@ from collections import defaultdict
 from gymnasium.spaces import Space
 import numpy as np
 import random
+import time
 
 def assert_agent_set_up(func):
     def decorator(obj, *args, **kwargs):
@@ -10,6 +11,17 @@ def assert_agent_set_up(func):
         else:
             raise Exception("Agent has not been set up!")
     return decorator
+
+def time_func(func_name):
+    def timed_func(func):
+        def decorator(obj, *args, **kwargs):
+            start = time.perf_counter()
+            return_val = func(obj, *args, **kwargs)
+            end = time.perf_counter()
+            obj.logger[func_name].append(end - start)
+            return return_val
+        return decorator
+    return timed_func
 
 class Agent:
     """
@@ -24,6 +36,7 @@ class Agent:
         self.record: list[float] = []
         self.learning = True
         self.set_up_bool = False
+        self.logger: defaultdict = defaultdict(lambda: [])
     
     def set_up(self,
                action_space: Space, 

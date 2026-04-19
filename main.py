@@ -77,7 +77,7 @@ def experiment1(environment, player, adversary, numTrain, numPlay):
     #environment.enable_rendering()
     environment.runNumGames(player, adversary, numTrain)
     eval = Evaluator()
-    eval.plotMovingAverage(adversary.training_error, 1000)
+    eval.plotMovingAverage(adversary.logger["get_q_value"], 1000)
     eval.show()
     if numPlay > 0:
         adversary.disableLearning()
