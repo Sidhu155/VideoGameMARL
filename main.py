@@ -3,8 +3,8 @@ import torch
 import pickle
 from argparse import ArgumentParser
 from environments import connectfour
-from agents.qAgents import QTabAgent, QFuncApproxAgent
-from agents.sarsaAgents import SARSATabAgent, SARSAFuncApproxAgent
+from agents.tabularQAgents import QTabAgent, SARSATabAgent
+from agents.funcQAgents import QFuncApproxAgent, SARSAFuncApproxAgent
 from agents.randomAgent import RandomAgent
 from agents.playerAgent import PlayerAgent
 from evaluator import Evaluator
