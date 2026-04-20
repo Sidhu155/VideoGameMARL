@@ -1,27 +1,7 @@
 from collections import defaultdict
 from gymnasium.spaces import Space
 import numpy as np
-import random
-import time
-
-def assert_agent_set_up(func):
-    def decorator(obj, *args, **kwargs):
-        if obj.set_up_bool:
-            return func(obj, *args, **kwargs)
-        else:
-            raise Exception("Agent has not been set up!")
-    return decorator
-
-def time_func(func_name):
-    def timed_func(func):
-        def decorator(obj, *args, **kwargs):
-            start = time.perf_counter()
-            return_val = func(obj, *args, **kwargs)
-            end = time.perf_counter()
-            obj.logger[func_name].append(end - start)
-            return return_val
-        return decorator
-    return timed_func
+from .decorators import assert_agent_set_up
 
 class Agent:
     """
@@ -30,7 +10,7 @@ class Agent:
 
     def __init__(self):
         """
-        Initialise Agent. Enable learning and create record of wins.
+        Initialise Agent. Enable learning and create logger.
         """
 
         self.learning = True
@@ -43,13 +23,17 @@ class Agent:
                seed: int | None = None) -> None:
         """
         Args:
-            action_space: The action_space that actions can be chosen from by the agent
+            action_space: The action space that actions can be chosen from by the agent
+            observation_space: The observation space of the environment for an agent.
             seed: This defines the seed for random sampling from the action_space.
         
         Performs any setting up required before the agent begins interaction with the environment.
-        Seeds action space if seed is provided.
+        Raises exception if agent has already been set up.
         """
 
+        if self.set_up_bool:
+            raise Exception("Agent has already been set up!")
+        
         self.action_space = action_space
         self.action_space.seed(seed)
         self.set_up_bool = True
@@ -109,7 +93,6 @@ class Agent:
         """
         Disable Learning.
         Agents no longer update themselves based on information received from the environment.
-        RL based agents may only pick best known actions instead of explorative actions.
         """
 
         self.learning = False
