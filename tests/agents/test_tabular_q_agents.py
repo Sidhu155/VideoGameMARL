@@ -1,8 +1,7 @@
 import pytest
 import numpy as np
 from tests.agents.basetabulartest import BaseTestTabular
-from agents.qAgents import QTabAgent
-from agents.sarsaAgents import SARSATabAgent
+from agents.tabularQAgents import QTabAgent, SARSATabAgent
 
 class TestQTabularAgent(BaseTestTabular):
 

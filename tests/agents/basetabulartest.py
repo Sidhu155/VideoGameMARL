@@ -4,7 +4,7 @@ import random
 from collections import defaultdict
 from gymnasium.spaces import Space
 from tests.agents.test_base_agent import BaseTestAgent
-from agents.baseQAgent import Tabular
+from agents.tabularQAgents import Tabular
 from tests.agents.conftest import (
     parametrize_final_reward, parametrize_get_action, parametrize_epsilon,
     parametrize_q_table
@@ -16,12 +16,12 @@ class BaseTestTabular(BaseTestAgent):
         super().test_init(agent)
         assert agent.prevAction is None
         assert agent.prevObs is None
-        assert agent.training_error == []
+        assert agent.logger["training_error"] == []
 
-    def test_set_up(self, agent: Tabular, action_space: Space):
+    def test_set_up(self, agent: Tabular, action_space: Space, observation_space: Space):
         assert not hasattr(agent, 'q_values')
         assert not hasattr(agent, 'numActions')
-        super().test_set_up(agent, action_space)
+        super().test_set_up(agent, action_space, observation_space)
         assert hasattr(agent, 'q_values')
         assert hasattr(agent, 'numActions')
         assert type(agent.q_values) == defaultdict

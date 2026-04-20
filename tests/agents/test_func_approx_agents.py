@@ -1,8 +1,7 @@
 import pytest
 import numpy as np
 from tests.agents.basefunctiontest import BaseTestFuncApprox
-from agents.qAgents import QFuncApproxAgent
-from agents.sarsaAgents import SARSAFuncApproxAgent
+from agents.funcQAgents import QFuncApproxAgent, SARSAFuncApproxAgent
 
 class TestQFuncApproxAgent(BaseTestFuncApprox):
 
