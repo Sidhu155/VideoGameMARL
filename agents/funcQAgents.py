@@ -15,7 +15,7 @@ class FuncApprox(BaseQValAgent):
         learning_rate: float = 1e-3,
         epsilon: float = 1e-1,
         learning_decay: float = 1e-8,
-        epsilon_decay: float = 1e-5,
+        epsilon_decay: float = 1e-6,
         final_learning_rate: float = 1e-4,
         final_epsilon: float = 1e-2,
         discount_factor: float = 0.95

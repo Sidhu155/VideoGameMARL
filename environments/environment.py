@@ -27,7 +27,7 @@ class Environment:
 
         pass
 
-    def runNumGames(self, agent0, agent1, numGames):
+    def runNumGames(self, agent0: Agent, agent1: Agent, numGames: int):
         """
         Args:
             agent0: The player Agent

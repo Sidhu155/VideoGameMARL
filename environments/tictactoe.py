@@ -1,13 +1,10 @@
-"""Contains Connect Four wrapper class and relevant methods"""
-from agents.agent import Agent
 from .environment import Environment
-from pettingzoo.classic import connect_four_v3
-import gymnasium as gym
-from tqdm import tqdm
+from agents.agent import Agent
+from pettingzoo.classic import tictactoe_v3
 
-class ConnectFour(Environment):
+class TicTacToe(Environment):
     """
-    A wrapper class around the Connect Four classic environment from PettingZoo.
+    A wrapper class around the TicTacToe classic environment from PettingZoo.
     Inherits from Environment class
     """
 
@@ -17,7 +14,7 @@ class ConnectFour(Environment):
     def run(self, agent0: Agent, agent1: Agent):
         for agent in self.env.agent_iter():
             observation, reward, termination, truncation, info = self.env.last()
-            currAgent = agent0 if agent == "player_0" else agent1
+            currAgent = agent0 if agent == "player_1" else agent1
 
             obs = observation["observation"]
             if termination or truncation:
@@ -33,6 +30,18 @@ class ConnectFour(Environment):
 
         self.env.reset()
 
+    def get_action_spaces(self) -> list:
+        return [
+            self.env.action_space("player_1"),
+            self.env.action_space("player_2")
+        ]
+
+    def get_observation_spaces(self) -> list:
+        return [
+            self.env.observation_space("player_1")["observation"],
+            self.env.observation_space("player_2")["observation"]
+        ]
+    
     def create_env(self, render_type=None):
-        self.env = self.env = connect_four_v3.env(render_mode=render_type, screen_scaling=7)
+        self.env = self.env = tictactoe_v3.env(render_mode=render_type, screen_height=600)
         self.env.reset()

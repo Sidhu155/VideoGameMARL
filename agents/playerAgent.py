@@ -22,7 +22,10 @@ class PlayerAgent(Agent):
                 print(f"An exception was raised: {e}")
                 action = None
             else:
-                if mask[action] == 0:
+                if action >= len(mask):
+                    print("Please choose within the range of available actions")
+                    action = None
+                elif mask[action] == 0:
                     print("This action is invalid. Please choose another")
                     action = None
         return action
