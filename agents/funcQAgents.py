@@ -62,6 +62,9 @@ class FuncApprox(BaseQValAgent):
         used when calculating the q_value of said observation-action pair.
         """
 
+        if obs.size != self.numFeatures:
+            raise ValueError(f"Observation has size {obs.size} but size {self.numFeatures} is required!")
+        
         obs_vector = np.ravel(obs)  #Flatten observation array
         vector = np.zeros((self.q_function.size))   #Create vector of zeros in same size as q_function
         
