@@ -158,6 +158,9 @@ class BaseQValAgent(Agent):
 
         Returns:
             A q-value
+
+        This function is implemented in the Q-Learning and SARSA mixins and is used to
+        find the next q-value during the update step.
         """
 
         pass

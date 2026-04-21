@@ -3,7 +3,7 @@ import numpy as np
 import random
 from gymnasium.spaces import Space
 from tests.agents.test_base_agent import BaseTestAgent
-from agents.funcQAgents import FuncApprox
+from agents.funcQAgents import FuncApprox, QFuncApproxAgent, SARSAFuncApproxAgent
 
 class BaseTestFuncApprox(BaseTestAgent):
     
@@ -55,5 +55,35 @@ class BaseTestFuncApprox(BaseTestAgent):
     def test_obs_to_vector(self, set_up_agent: FuncApprox):
         pass
 
-    def test_get_default_func(self, set_up_agent: FuncApprox):
-        pass
+    def test_decay(self, agent: FuncApprox):
+        agent.decay()
+        assert pytest.approx(agent.epsilon) == 0.1 - 0.0001
+        assert pytest.approx(agent.lr) == 0.2 - 0.0002
+
+class TestQFuncApproxAgent(BaseTestFuncApprox):
+
+    @pytest.fixture
+    def agent(self) -> QFuncApproxAgent:
+        return QFuncApproxAgent(
+            learning_rate = 1e-3,
+            epsilon = 1e-1,
+            learning_decay = 1e-8,
+            epsilon_decay = 1e-6,
+            final_learning_rate = 1e-4,
+            final_epsilon = 1e-2,
+            discount_factor = 0.95
+        )
+
+class TestSARSAFuncApproxAgent(BaseTestFuncApprox):
+
+    @pytest.fixture
+    def agent(self) -> SARSAFuncApproxAgent:
+        return SARSAFuncApproxAgent(
+            learning_rate = 1e-3,
+            epsilon = 1e-1,
+            learning_decay = 1e-8,
+            epsilon_decay = 1e-6,
+            final_learning_rate = 1e-4,
+            final_epsilon = 1e-2,
+            discount_factor = 0.95
+        )
