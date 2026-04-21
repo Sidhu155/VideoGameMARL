@@ -29,16 +29,15 @@ class BaseTestTabular(BaseTestAgent):
 
     @parametrize_get_action
     @parametrize_epsilon
-    def test_get_action(self, 
-                        set_up_agent: Tabular, q_vals: list,
+    def test_get_action(self, set_up_agent: Tabular,
                         mask: np.ndarray, epsilon: float,
                         expected_max: int, expected_rand: int):
         random.seed(self.get_seed_val())
         np.random.seed(self.get_seed_val())
-        
         obs = np.array((0, 1, 3, 2, 4))
+        set_up_agent.q_values[obs.tobytes()] = [0.0, 1.0, -1.0, 3.0]
+
         set_up_agent.epsilon = epsilon
-        set_up_agent.q_values[obs.tobytes()] = q_vals
         
         action = set_up_agent.get_action(obs, mask)
         if epsilon < 0.7:
@@ -48,13 +47,15 @@ class BaseTestTabular(BaseTestAgent):
 
     @parametrize_get_action
     @parametrize_epsilon
-    def test_get_action_learning_disabled(self, set_up_agent: Tabular, q_vals, mask, expected_max, expected_rand, epsilon):
+    def test_get_action_learning_disabled(self, set_up_agent: Tabular, mask, expected_max, expected_rand, epsilon):
         random.seed(self.get_seed_val())
         np.random.seed(self.get_seed_val())
         obs = np.array((0, 1, 3, 2, 4))
+        set_up_agent.q_values[obs.tobytes()] = [0.0, 1.0, -1.0, 3.0]
+
         set_up_agent.disableLearning()
         set_up_agent.epsilon = epsilon
-        set_up_agent.q_values[obs.tobytes()] = q_vals
+
         action = set_up_agent.get_action(obs, mask)
         assert action == expected_max
 
