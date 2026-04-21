@@ -37,6 +37,7 @@ class Tabular(BaseQValAgent):
     @time_func("get_q_value")
     @assert_agent_set_up
     def get_q_value(self, obs: np.ndarray, action: int) -> float:
+        super().get_q_value(obs, action)
         return self.q_values[obs.tobytes()][action]
     
     @time_func("update_q_value")

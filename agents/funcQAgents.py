@@ -39,6 +39,7 @@ class FuncApprox(BaseQValAgent):
     @time_func("get_q_value")
     @assert_agent_set_up
     def get_q_value(self, obs: np.ndarray, action: int) -> float:
+        super().get_q_value(obs, action)
         vector = self.obs_to_feature_vector(obs, action)
         return vector @ self.q_function
     

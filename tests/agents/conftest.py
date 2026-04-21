@@ -30,3 +30,10 @@ parametrize_q_table = pytest.mark.parametrize('obs, utilities, action, action_ut
     (np.array([0, 1, 1, 0]), np.array([0.0, 1.0, -1.0, 3.0]), 2, -1.0, 3.0, -1000.0),
     (np.array([0, 1, 1, 0]), np.array([0.0, 1.0, -1.0, 3.0]), 3, 3.0, 3.0, 0.573645),
 ])
+
+parametrize_seed_expected_max_action = pytest.mark.parametrize('seed, expected_action', [
+    (1, 1),
+    (5, 2),
+    (10, 0),
+    (11, 3)
+])

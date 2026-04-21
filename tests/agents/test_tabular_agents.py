@@ -7,7 +7,7 @@ from tests.agents.test_base_agent import BaseTestAgent
 from agents.tabularQAgents import Tabular, QTabAgent, SARSATabAgent
 from tests.agents.conftest import (
     parametrize_final_reward, parametrize_get_action, parametrize_epsilon,
-    parametrize_q_table
+    parametrize_q_table, parametrize_seed_expected_max_action
 )
 
 class BaseTestTabular(BaseTestAgent):
@@ -58,6 +58,18 @@ class BaseTestTabular(BaseTestAgent):
 
         action = set_up_agent.get_action(obs, mask)
         assert action == expected_max
+
+    @parametrize_seed_expected_max_action
+    def test_get_action_multiple_max_actions(self, set_up_agent: Tabular, seed: int, expected_action: int):
+        random.seed(seed)
+        np.random.seed(seed)
+        obs = np.array((0, 1, 3, 2, 4))
+        mask = np.array([1, 1, 1, 1])
+        set_up_agent.q_values[obs.tobytes()] = [1.0, 1.0, 1.0, 1.0]
+        set_up_agent.disableLearning()
+        
+        action = set_up_agent.get_action(obs, mask)
+        assert action == expected_action
 
     def test_update_learning_disabled(self, set_up_agent: Tabular):
         set_up_agent.disableLearning()

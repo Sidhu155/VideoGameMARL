@@ -4,7 +4,10 @@ import random
 from gymnasium.spaces import Space
 from tests.agents.test_base_agent import BaseTestAgent
 from agents.funcQAgents import FuncApprox, QFuncApproxAgent, SARSAFuncApproxAgent
-from tests.agents.conftest import parametrize_final_reward, parametrize_get_action, parametrize_epsilon
+from tests.agents.conftest import (
+    parametrize_final_reward, parametrize_get_action, parametrize_epsilon,
+    parametrize_seed_expected_max_action
+)
 
 class BaseTestFuncApprox(BaseTestAgent):
     
@@ -60,6 +63,63 @@ class BaseTestFuncApprox(BaseTestAgent):
         action = set_up_agent.get_action(obs, mask)
         assert action == expected_max
 
+    @parametrize_seed_expected_max_action
+    def test_get_action_multiple_max_actions(self, set_up_agent: FuncApprox, seed: int, expected_action: int):
+        random.seed(seed)
+        np.random.seed(seed)
+        obs = np.array([[[1, 2]]])
+        mask = np.array([1, 1, 1, 1])
+        set_up_agent.q_function = np.array([0, 1, 0, 1, 0, 1, 0, 1, 2])
+        set_up_agent.disableLearning()
+
+        
+        action = set_up_agent.get_action(obs, mask)
+        assert action == expected_action
+
+    def test_update_learning_disabled(self, set_up_agent: FuncApprox):
+        set_up_agent.disableLearning()
+        
+        prevObs = np.array([[[1, 2]]])
+        prevAction = 1
+        reward = 10
+        obs = np.array([[[2, 1]]])
+        action = 2
+
+        set_up_agent.q_function = np.array([0, 1, 3, 0, 2.1, 4.2, 1.1, 3, 2])
+        set_up_agent.prevObs = prevObs
+        set_up_agent.prevAction = prevAction
+
+        set_up_agent.update(reward, obs, action)
+        assert np.array_equal(set_up_agent.q_function, np.array([0, 1, 3, 0, 2.1, 4.2, 1.1, 3, 2]))
+        assert np.array_equal(set_up_agent.prevObs, obs)
+        assert set_up_agent.prevAction == action
+
+    def test_update_none_prev_act_obs(self, set_up_agent: FuncApprox):
+        reward = 10
+        obs = np.array([[[2, 1]]])
+        action = 2
+
+        set_up_agent.q_function = np.array([0, 1, 3, 0, 2.1, 4.2, 1.1, 3, 2])
+
+        set_up_agent.update(reward, obs, action)
+        assert np.array_equal(set_up_agent.q_function, np.array([0, 1, 3, 0, 2.1, 4.2, 1.1, 3, 2]))
+        assert np.array_equal(set_up_agent.prevObs, obs)
+        assert set_up_agent.prevAction == action
+
+    def test_update_none_curr_obs_act(self, set_up_agent: FuncApprox):
+        prevObs = np.array([[[1, 2]]])
+        prevAction = 1
+        reward = 10
+
+        set_up_agent.q_function = np.array([0, 1, 3, 0, 2.1, 4.2, 1.1, 3, 2])
+        set_up_agent.prevObs = prevObs
+        set_up_agent.prevAction = prevAction
+
+        set_up_agent.update(reward, None, None)
+        assert np.array_equal(set_up_agent.q_function, np.array([0, 1, 3.005, 0.01, 2.1, 4.2, 1.1, 3, 2.005]))
+        assert set_up_agent.prevObs is None
+        assert set_up_agent.prevAction is None
+
     @parametrize_final_reward
     def test_final(self, set_up_agent: FuncApprox, rewards, expected_record):
         super().test_final(set_up_agent, rewards, expected_record)
@@ -74,10 +134,20 @@ class BaseTestFuncApprox(BaseTestAgent):
         assert set_up_agent.get_q_value(obs, 2) == 12.5
         assert set_up_agent.get_q_value(obs, 3) == 9.1
 
+    def test_get_q_val_without_set_up(self, agent: FuncApprox):
+        with pytest.raises(Exception) as excp:
+            agent.get_q_value(np.array((0, 1, 1, 0)), 2)
+        assert "Agent has not been set up!" in str(excp.value)
+
     def test_get_max_q_val(self, set_up_agent: FuncApprox):
         obs = np.array([[[1, 2]]])
         set_up_agent.q_function = np.array([0, 1, 3, 0, 2.1, 4.2, 1.1, 3, 2])
         assert set_up_agent.get_max_q_value(obs) == 12.5
+
+    def test_get_max_q_val_without_set_up(self, agent: FuncApprox):
+        with pytest.raises(Exception) as excp:
+            agent.get_max_q_value(np.array((0, 1, 1, 0)))
+        assert "Agent has not been set up!" in str(excp.value)
     
     def test_update_q_val(self, set_up_agent: FuncApprox):
         obs = np.array([[[1, 2]]])
@@ -91,6 +161,11 @@ class BaseTestFuncApprox(BaseTestAgent):
         assert pytest.approx(set_up_agent.q_function[5]) == 4.2 + (set_up_agent.lr * -10) * 2
         assert np.array_equal(set_up_agent.q_function[6:8], np.array([1.1, 3]))
         assert set_up_agent.q_function[8] == 2 + (set_up_agent.lr * -10)
+
+    def test_update_q_val_without_set_up(self, agent: FuncApprox):
+        with pytest.raises(Exception) as excp:
+            agent.update_q_value(10, 20)
+        assert "Agent has not been set up!" in str(excp.value)
 
     def test_obs_to_vector(self, set_up_agent: FuncApprox):
         obs = np.array([[[1, 2]]])
@@ -128,6 +203,23 @@ class TestQFuncApproxAgent(BaseTestFuncApprox):
             final_epsilon = 1e-2,
             discount_factor = 0.95
         )
+    
+    def test_update(self, set_up_agent: QFuncApproxAgent):
+        prevObs = np.array([[[1, 2]]])
+        prevAction = 1
+        reward = 10
+        obs = np.array([[[2, 1]]])
+        action = 0
+
+        set_up_agent.q_function = np.array([0, 1, 3, 0, 2.1, 4.2, 1.1, 3, 2])
+        set_up_agent.prevObs = prevObs
+        set_up_agent.prevAction = prevAction
+
+        set_up_agent.update(reward, obs, action)
+        expected_q_func = np.array([0, 1, pytest.approx(3.01488), pytest.approx(0.02976), 2.1, 4.2, 1.1, 3, pytest.approx(2.01488)])
+        assert np.array_equal(set_up_agent.q_function, expected_q_func)
+        assert np.array_equal(set_up_agent.prevObs, obs)
+        assert set_up_agent.prevAction == action
 
 class TestSARSAFuncApproxAgent(BaseTestFuncApprox):
 
@@ -142,3 +234,20 @@ class TestSARSAFuncApproxAgent(BaseTestFuncApprox):
             final_epsilon = 1e-2,
             discount_factor = 0.95
         )
+    
+    def test_update(self, set_up_agent: SARSAFuncApproxAgent):
+        prevObs = np.array([[[1, 2]]])
+        prevAction = 1
+        reward = 10
+        obs = np.array([[[2, 1]]])
+        action = 0
+
+        set_up_agent.q_function = np.array([0, 1, 3, 0, 2.1, 4.2, 1.1, 3, 2])
+        set_up_agent.prevObs = prevObs
+        set_up_agent.prevAction = prevAction
+
+        set_up_agent.update(reward, obs, action)
+        expected_q_func = np.array([0, 1, pytest.approx(3.00785), pytest.approx(0.0157), 2.1, 4.2, 1.1, 3, pytest.approx(2.00785)])
+        assert np.array_equal(set_up_agent.q_function, expected_q_func)
+        assert np.array_equal(set_up_agent.prevObs, obs)
+        assert set_up_agent.prevAction == action
