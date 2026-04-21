@@ -1,30 +1,61 @@
+import os
 import sys
 import torch
-import pickle
+import dill as pickle
+from pathlib import Path
 from argparse import ArgumentParser
-from environments import connectfour
+from environments import connectfour, tictactoe
 from agents.tabularQAgents import QTabAgent, SARSATabAgent
 from agents.funcQAgents import QFuncApproxAgent, SARSAFuncApproxAgent
 from agents.randomAgent import RandomAgent
 from agents.playerAgent import PlayerAgent
 from evaluator import Evaluator
 
+path_objects = "saved_objects"
+
+def writeToFile(object, filename):
+    with open(filename, 'wb') as outp:
+        pickle.dump(object, outp)
+
+def loadToFile(filename) -> object:
+    with open(filename, 'rb') as input:
+        return pickle.load(input)
+
 def parse(args: list[str] | None = None):
     parser = ArgumentParser()
-    parser.add_argument("-e", "--env", dest="environment")
+    parser.add_argument("environment", type=str)
     parser.add_argument("-p", "--player", dest="playerAgent")
     parser.add_argument("-a", "--adversary", dest="adversaryAgent")
     parser.add_argument("-n", "--numtrain", dest="numTrain", type=int, default=1000)
+    parser.add_argument("-w", "--numwatch", dest="numWatch", type=int, default=0)
     parser.add_argument("-x", "--numplay", dest="numPlay", type=int, default=0)
+    parser.add_argument("-s:a", "--save-adversary", action="store_true")
+    parser.add_argument("-s:p", "--save-player", action="store_true")
+    parser.add_argument("-s:e", "--save-env", action="store_true")
+    parser.add_argument("-t:w", "--train-watch", action="store_true")
+    parser.add_argument("-t:p", "--train-play", action="store_true")
     return parser.parse_args(args)
 
 def match_args(args):
+    loaded_player = False
+    loaded_adversary = False
+
     match args.environment:
-        case "connectfour" | None:
+        case "connectfour":
             environment = connectfour.ConnectFour()
+        case "tictactoe":
+            environment = tictactoe.TicTacToe()
         case _:
-            raise Exception("Please input a valid environment")
-    
+            try:
+                environment = loadToFile(args.environment)
+            except Exception as e:
+                print(type(e))
+                print(e.value)
+                raise Exception("Please input a valid environment")
+            else:
+                environment.create_env()
+    action_space = environment.get_action_spaces()
+    observation_space = environment.get_observation_spaces()
 
     match args.playerAgent:
         case "qTab":
@@ -40,7 +71,17 @@ def match_args(args):
         case "randAgent" | None:
             player = RandomAgent()
         case _:
-            raise Exception("Please input a valid player agent")
+            try:
+                player = loadToFile('/'.join((path_objects, "players", args.playerAgent)))
+            except Exception as excp:
+                print(type(excp))
+                print(excp)
+                raise Exception("Please input a valid player agent")
+            else:
+                loaded_player = True
+    
+    if not loaded_player:
+        player.set_up(action_space[0], observation_space[0])
 
     match args.adversaryAgent:
         case "qTab":
@@ -54,48 +95,65 @@ def match_args(args):
         case "randAgent" | None:
             adversary = RandomAgent()
         case _:
-            raise Exception("Please input a valid adversary agent")
-        
-    if args.numTrain < 1:
-        raise Exception("Number of Games must be higher than 0")
+            try:
+                adversary = loadToFile('/'.join((path_objects, "adversaries", args.adversaryAgent)))
+            except Exception as e:
+                print(type(e))
+                print(e.value)
+                raise Exception("Please input a valid adversary agent")
+            else:
+                loaded_adversary = True
+    if not loaded_adversary:
+        adversary.set_up(action_space[1], observation_space[1])
+
+    if args.numTrain < 0:
+        raise Exception("Number of games for training cannot be negative")
+    
+    if args.numWatch < 0:
+        raise Exception("Number of games for watching cannot be negative")
     
     if args.numPlay < 0:
-        raise Exception("Number of play games cannot be negative")
-        
-    action_space = environment.get_action_spaces()
-    observation_space = environment.get_observation_spaces()
-    player.set_up(action_space[0], observation_space[0])
-    adversary.set_up(action_space[1], observation_space[1])
+        raise Exception("Number of games for play cannot be negative")
 
-    return environment, player, adversary, args.numTrain, args.numPlay
-
-def writeToFile(object, filename='out_file'):
-    with open(filename, 'wb') as outp:
-        pickle.dump(object, outp, pickle.HIGHEST_PROTOCOL)
-
-def experiment1(environment, player, adversary, numTrain, numPlay):
-    #environment.enable_rendering()
-    environment.runNumGames(player, adversary, numTrain)
-    eval = Evaluator()
-    eval.plotMovingAverage(adversary.logger["get_q_value"], 1000)
-    eval.show()
-    if numPlay > 0:
-        adversary.disableLearning()
-        temp_action_space = player.action_space
-        player = PlayerAgent()
-        player.set_up(temp_action_space)
-        environment.enable_rendering()
-        environment.runNumGames(player, adversary, numPlay)
-        environment.disable_rendering()
-    environment.tear_down()
-
-def experiment2(environment, player, adversary, numTrain, numPlay):
-    pass
+    return (environment, player, adversary, args.numTrain, args.numWatch, args.numPlay,
+            args.save_player, args.save_adversary, args.save_env, args.train_watch, args.train_play)
 
 def main(args: list[str] | None =  None):
     torch.set_default_device('mps')
-    environment, player, adversary, numTrain, numPlay = match_args(parse(args))
-    experiment1(environment, player, adversary, numTrain, numPlay)
+    (environment, player, adversary, numTrain, numWatch, numPlay,
+    save_player, save_adversary, save_env, train_watch, train_play) = match_args(parse(args))
+
+    print("Training...")
+    environment.runNumGames(player, adversary, numTrain)
+    
+    environment.enable_rendering()
+    if not train_watch:
+        player.disableLearning()
+        adversary.disableLearning()
+    print("Watching...")
+    environment.runNumGames(player, adversary, numWatch)
+
+    if save_player:
+        Path("saved_objects/players").mkdir(parents=True, exist_ok=True)
+        i = 0
+        while os.path.exists(f"saved_objects/players/player{i}"):
+            i += 1
+        writeToFile(player, f"saved_objects/players/player{i}")
+    
+    temp_action_space = player.action_space
+    player = PlayerAgent()
+    player.set_up(temp_action_space)
+
+    if not train_play:
+        player.disableLearning()
+        adversary.disableLearning()
+    else:
+        player.enableLearning()
+        adversary.enableLearning()
+    print("Playing...")
+    environment.runNumGames(player, adversary, numPlay)
+
+    environment.tear_down()
 
 
 if __name__ == "__main__":

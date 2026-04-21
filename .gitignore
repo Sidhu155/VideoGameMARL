@@ -5,3 +5,4 @@ __pycache__
 /marlproject
 .coverage
 /htmlcov
+/saved_objects

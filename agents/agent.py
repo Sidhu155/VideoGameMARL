@@ -15,7 +15,7 @@ class Agent:
 
         self.learning = True
         self.set_up_bool = False
-        self.logger: defaultdict = defaultdict(lambda: [])
+        self.logger: defaultdict = defaultdict(list)
     
     def set_up(self,
                action_space: Space, 
