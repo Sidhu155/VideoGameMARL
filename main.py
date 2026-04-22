@@ -5,11 +5,11 @@ import dill as pickle
 from pathlib import Path
 from argparse import ArgumentParser
 from environments import connectfour, tictactoe
+from agents.agent import Agent
 from agents.tabularQAgents import QTabAgent, SARSATabAgent
 from agents.funcQAgents import QFuncApproxAgent, SARSAFuncApproxAgent
 from agents.randomAgent import RandomAgent
 from agents.playerAgent import PlayerAgent
-from evaluator import Evaluator
 
 path_objects = "saved_objects"
 
@@ -34,6 +34,8 @@ def parse(args: list[str] | None = None):
     parser.add_argument("-s:e", "--save-env", action="store_true")
     parser.add_argument("-t:w", "--train-watch", action="store_true")
     parser.add_argument("-t:p", "--train-play", action="store_true")
+    parser.add_argument("-d:p", "--disable-player-learn", action="store_true")
+    parser.add_argument("-d:a", "--disable-adversary-learn", action="store_true")
     return parser.parse_args(args)
 
 def match_args(args):
@@ -47,11 +49,11 @@ def match_args(args):
             environment = tictactoe.TicTacToe()
         case _:
             try:
-                environment = loadToFile(args.environment)
-            except Exception as e:
-                print(type(e))
-                print(e.value)
-                raise Exception("Please input a valid environment")
+                environment = loadToFile('/'.join((path_objects, "environments", args.environment)))
+            except Exception as excp:
+                print(type(excp))
+                print(excp)
+                raise Exception("Please input a valid environment or filepath")
             else:
                 environment.create_env()
     action_space = environment.get_action_spaces()
@@ -72,16 +74,22 @@ def match_args(args):
             player = RandomAgent()
         case _:
             try:
-                player = loadToFile('/'.join((path_objects, "players", args.playerAgent)))
+                player: Agent = loadToFile('/'.join((path_objects, "players", args.playerAgent)))
+                if player.observation_space != observation_space[0]:
+                    raise ValueError("Loaded player agent's observation space does not match environment")
+                if player.action_space != action_space[0]:
+                    raise ValueError("Loaded player agent's action space does not match environment")
             except Exception as excp:
                 print(type(excp))
                 print(excp)
-                raise Exception("Please input a valid player agent")
+                raise Exception("Please input a valid player agent or filepath")
             else:
                 loaded_player = True
     
     if not loaded_player:
         player.set_up(action_space[0], observation_space[0])
+    if args.disable_player_learn:
+        player.disableLearning()
 
     match args.adversaryAgent:
         case "qTab":
@@ -97,14 +105,20 @@ def match_args(args):
         case _:
             try:
                 adversary = loadToFile('/'.join((path_objects, "adversaries", args.adversaryAgent)))
-            except Exception as e:
-                print(type(e))
-                print(e.value)
-                raise Exception("Please input a valid adversary agent")
+                if adversary.observation_space != observation_space[1]:
+                    raise ValueError("Loaded adversary agent's observation space does not match environment")
+                if adversary.action_space != action_space[1]:
+                    raise ValueError("Loaded adversary agent's action space does not match environment")
+            except Exception as excp:
+                print(type(excp))
+                print(excp)
+                raise Exception("Please input a valid adversary agent or filepath")
             else:
                 loaded_adversary = True
     if not loaded_adversary:
         adversary.set_up(action_space[1], observation_space[1])
+    if args.disable_adversary_learn:
+        adversary.disableLearning()
 
     if args.numTrain < 0:
         raise Exception("Number of games for training cannot be negative")
@@ -125,7 +139,7 @@ def main(args: list[str] | None =  None):
 
     print("Training...")
     environment.runNumGames(player, adversary, numTrain)
-    
+
     environment.enable_rendering()
     if not train_watch:
         player.disableLearning()
@@ -134,26 +148,38 @@ def main(args: list[str] | None =  None):
     environment.runNumGames(player, adversary, numWatch)
 
     if save_player:
-        Path("saved_objects/players").mkdir(parents=True, exist_ok=True)
+        Path('/'.join((path_objects, "players"))).mkdir(parents=True, exist_ok=True)
         i = 0
-        while os.path.exists(f"saved_objects/players/player{i}"):
+        while os.path.exists('/'.join((path_objects, "players", f"player{i}"))):
             i += 1
-        writeToFile(player, f"saved_objects/players/player{i}")
+        writeToFile(player, '/'.join((path_objects, "players", f"player{i}")))
     
     temp_action_space = player.action_space
     player = PlayerAgent()
     player.set_up(temp_action_space)
 
     if not train_play:
-        player.disableLearning()
         adversary.disableLearning()
     else:
-        player.enableLearning()
         adversary.enableLearning()
     print("Playing...")
     environment.runNumGames(player, adversary, numPlay)
 
+    if save_adversary:
+        Path('/'.join((path_objects, "adversaries"))).mkdir(parents=True, exist_ok=True)
+        i = 0
+        while os.path.exists('/'.join((path_objects, "adversaries", f"adversary{i}"))):
+            i += 1
+        writeToFile(adversary, '/'.join((path_objects, "adversaries", f"adversary{i}")))
+
     environment.tear_down()
+
+    if save_env:
+        Path('/'.join((path_objects, "environments"))).mkdir(parents=True, exist_ok=True)
+        i = 0
+        while os.path.exists('/'.join((path_objects, "environments", f"environment{i}"))):
+            i += 1
+        writeToFile(environment, '/'.join((path_objects, "environments", f"environment{i}")))
 
 
 if __name__ == "__main__":

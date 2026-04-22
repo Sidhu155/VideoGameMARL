@@ -32,7 +32,6 @@ class FuncApprox(BaseQValAgent):
                observation_space: Space,
                seed=None) -> None:
         super().set_up(action_space, observation_space, seed=seed)
-        self.observation_space = observation_space
         self.numFeatures = np.prod(observation_space.shape)
         self.q_function = self.getDefaultFunc()
 

@@ -35,6 +35,7 @@ class Agent:
             raise Exception("Agent has already been set up!")
         
         self.action_space = action_space
+        self.observation_space = observation_space
         self.action_space.seed(seed)
         self.set_up_bool = True
 
