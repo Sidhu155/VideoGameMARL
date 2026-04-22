@@ -19,9 +19,9 @@ def parse(args: list[str] | None = None):
     parser.add_argument("-n", "--numtrain", dest="numTrain", type=int, default=1000)
     parser.add_argument("-w", "--numwatch", dest="numWatch", type=int, default=0)
     parser.add_argument("-x", "--numplay", dest="numPlay", type=int, default=0)
-    parser.add_argument("-s:a", "--save-adversary", action="store_true")
-    parser.add_argument("-s:p", "--save-player", action="store_true")
-    parser.add_argument("-s:e", "--save-env", action="store_true")
+    parser.add_argument("-o:a", "--outfile-adversary")
+    parser.add_argument("-o:p", "--outfile-player")
+    parser.add_argument("-o:e", "--outfile-env")
     parser.add_argument("-t:w", "--train-watch", action="store_true")
     parser.add_argument("-t:p", "--train-play", action="store_true")
     parser.add_argument("-d:p", "--disable-player-learn", action="store_true")
@@ -120,12 +120,12 @@ def match_args(args):
         raise Exception("Number of games for play cannot be negative")
 
     return (environment, player, adversary, args.numTrain, args.numWatch, args.numPlay,
-            args.save_player, args.save_adversary, args.save_env, args.train_watch, args.train_play)
+            args.outfile_player, args.outfile_adversary, args.outfile_env, args.train_watch, args.train_play)
 
 def main(args: list[str] | None =  None):
     torch.set_default_device('mps')
     (environment, player, adversary, numTrain, numWatch, numPlay,
-    save_player, save_adversary, save_env, train_watch, train_play) = match_args(parse(args))
+    outfile_player, outfile_adversary, outfile_env, train_watch, train_play) = match_args(parse(args))
 
     print("Training...")
     environment.runNumGames((player, adversary), numTrain)
@@ -137,7 +137,7 @@ def main(args: list[str] | None =  None):
     print("Watching...")
     environment.runNumGames((player, adversary), numWatch)
 
-    if save_player: writeToFile(player, 'p') 
+    if outfile_player: writeToFile(player, outfile_player, 'p') 
     
     temp_action_space = player.action_space
     player = PlayerAgent()
@@ -149,10 +149,10 @@ def main(args: list[str] | None =  None):
         adversary.enableLearning()
     print("Playing...")
     environment.runNumGames((player, adversary), numPlay)
-    if save_adversary: writeToFile(adversary, 'a') 
+    if outfile_adversary: writeToFile(adversary, outfile_adversary, 'a') 
 
     environment.tear_down()
-    if save_env: writeToFile(environment, 'e') 
+    if outfile_env: writeToFile(environment, outfile_env, 'e') 
 
 
 if __name__ == "__main__":
