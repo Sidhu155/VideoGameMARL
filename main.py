@@ -1,25 +1,15 @@
 import os
 import sys
 import torch
-import dill as pickle
-from pathlib import Path
 from argparse import ArgumentParser
+from file import writeToFile, loadFromFile
+from environments.environment import Environment
 from environments import connectfour, tictactoe
 from agents.agent import Agent
 from agents.tabularQAgents import QTabAgent, SARSATabAgent
 from agents.funcQAgents import QFuncApproxAgent, SARSAFuncApproxAgent
 from agents.randomAgent import RandomAgent
 from agents.playerAgent import PlayerAgent
-
-path_objects = "saved_objects"
-
-def writeToFile(object, filename):
-    with open(filename, 'wb') as outp:
-        pickle.dump(object, outp)
-
-def loadFromFile(filename) -> object:
-    with open(filename, 'rb') as input:
-        return pickle.load(input)
 
 def parse(args: list[str] | None = None):
     parser = ArgumentParser()
@@ -49,7 +39,7 @@ def match_args(args):
             environment = tictactoe.TicTacToe()
         case _:
             try:
-                environment = loadFromFile('/'.join((path_objects, "environments", args.environment)))
+                environment: Environment = loadFromFile(args.environment, 'e')
             except Exception as excp:
                 print(type(excp))
                 print(excp)
@@ -74,7 +64,7 @@ def match_args(args):
             player = RandomAgent()
         case _:
             try:
-                player: Agent = loadFromFile('/'.join((path_objects, "players", args.playerAgent)))
+                player: Agent = loadFromFile(args.playerAgent, 'p')
                 if player.observation_space != observation_space[0]:
                     raise ValueError("Loaded player agent's observation space does not match environment")
                 if player.action_space != action_space[0]:
@@ -104,7 +94,7 @@ def match_args(args):
             adversary = RandomAgent()
         case _:
             try:
-                adversary = loadFromFile('/'.join((path_objects, "adversaries", args.adversaryAgent)))
+                adversary: Agent = loadFromFile(args.adversaryAgent, 'a')
                 if adversary.observation_space != observation_space[1]:
                     raise ValueError("Loaded adversary agent's observation space does not match environment")
                 if adversary.action_space != action_space[1]:
@@ -147,12 +137,7 @@ def main(args: list[str] | None =  None):
     print("Watching...")
     environment.runNumGames((player, adversary), numWatch)
 
-    if save_player:
-        Path('/'.join((path_objects, "players"))).mkdir(parents=True, exist_ok=True)
-        i = 0
-        while os.path.exists('/'.join((path_objects, "players", f"player{i}"))):
-            i += 1
-        writeToFile(player, '/'.join((path_objects, "players", f"player{i}")))
+    if save_player: writeToFile(player, 'p') 
     
     temp_action_space = player.action_space
     player = PlayerAgent()
@@ -164,22 +149,10 @@ def main(args: list[str] | None =  None):
         adversary.enableLearning()
     print("Playing...")
     environment.runNumGames((player, adversary), numPlay)
-
-    if save_adversary:
-        Path('/'.join((path_objects, "adversaries"))).mkdir(parents=True, exist_ok=True)
-        i = 0
-        while os.path.exists('/'.join((path_objects, "adversaries", f"adversary{i}"))):
-            i += 1
-        writeToFile(adversary, '/'.join((path_objects, "adversaries", f"adversary{i}")))
+    if save_adversary: writeToFile(adversary, 'a') 
 
     environment.tear_down()
-
-    if save_env:
-        Path('/'.join((path_objects, "environments"))).mkdir(parents=True, exist_ok=True)
-        i = 0
-        while os.path.exists('/'.join((path_objects, "environments", f"environment{i}"))):
-            i += 1
-        writeToFile(environment, '/'.join((path_objects, "environments", f"environment{i}")))
+    if save_env: writeToFile(environment, 'e') 
 
 
 if __name__ == "__main__":
