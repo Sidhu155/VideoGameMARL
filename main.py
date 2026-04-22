@@ -14,12 +14,12 @@ from agents.playerAgent import PlayerAgent
 def parse(args: list[str] | None = None):
     parser = ArgumentParser()
     parser.add_argument("environment", type=str)
-    parser.add_argument("-p", "--player", dest="playerAgent")
-    parser.add_argument("-a", "--adversary", dest="adversaryAgent")
+    parser.add_argument("-p", "--player", dest="playerAgent", default="randAgent")
+    parser.add_argument("-a", "--adversary", nargs='*', dest="adversaryAgent", default=["randAgent"])
     parser.add_argument("-n", "--numtrain", dest="numTrain", type=int, default=1000)
     parser.add_argument("-w", "--numwatch", dest="numWatch", type=int, default=0)
     parser.add_argument("-x", "--numplay", dest="numPlay", type=int, default=0)
-    parser.add_argument("-o:a", "--outfile-adversary")
+    parser.add_argument("-o:a", "--outfile-adversary", nargs='*')
     parser.add_argument("-o:p", "--outfile-player")
     parser.add_argument("-o:e", "--outfile-env")
     parser.add_argument("-t:w", "--train-watch", action="store_true")
@@ -29,9 +29,6 @@ def parse(args: list[str] | None = None):
     return parser.parse_args(args)
 
 def match_args(args):
-    loaded_player = False
-    loaded_adversary = False
-
     match args.environment:
         case "connectfour":
             environment = connectfour.ConnectFour()
@@ -49,6 +46,7 @@ def match_args(args):
     action_space = environment.get_action_spaces()
     observation_space = environment.get_observation_spaces()
 
+    loaded_player = False
     match args.playerAgent:
         case "qTab":
             player = QTabAgent()
@@ -60,7 +58,7 @@ def match_args(args):
             player = SARSAFuncApproxAgent()
         case "playerAgent":
             player = PlayerAgent()
-        case "randAgent" | None:
+        case "randAgent":
             player = RandomAgent()
         case _:
             try:
@@ -81,34 +79,41 @@ def match_args(args):
     if args.disable_player_learn:
         player.disableLearning()
 
-    match args.adversaryAgent:
-        case "qTab":
-            adversary = QTabAgent()
-        case "sarsaTab":
-            adversary = SARSATabAgent()
-        case "qFunc":
-            adversary = QFuncApproxAgent()
-        case "sarsaFunc":
-            adversary = SARSAFuncApproxAgent()
-        case "randAgent" | None:
-            adversary = RandomAgent()
-        case _:
-            try:
-                adversary: Agent = loadFromFile(args.adversaryAgent, 'a')
-                if adversary.observation_space != observation_space[1]:
-                    raise ValueError("Loaded adversary agent's observation space does not match environment")
-                if adversary.action_space != action_space[1]:
-                    raise ValueError("Loaded adversary agent's action space does not match environment")
-            except Exception as excp:
-                print(type(excp))
-                print(excp)
-                raise Exception("Please input a valid adversary agent or filepath")
-            else:
-                loaded_adversary = True
-    if not loaded_adversary:
-        adversary.set_up(action_space[1], observation_space[1])
-    if args.disable_adversary_learn:
-        adversary.disableLearning()
+    adversaries = []
+    index = 1
+    for adversary in args.adversaryAgent:
+        loaded_adversary = False
+        match adversary:
+            case "qTab":
+                adversary = QTabAgent()
+            case "sarsaTab":
+                adversary = SARSATabAgent()
+            case "qFunc":
+                adversary = QFuncApproxAgent()
+            case "sarsaFunc":
+                adversary = SARSAFuncApproxAgent()
+            case "randAgent":
+                adversary = RandomAgent()
+            case _:
+                try:
+                    adversary: Agent = loadFromFile(args.adversaryAgent, 'a')
+                    if adversary.observation_space != observation_space[1]:
+                        raise ValueError("Loaded adversary agent's observation space does not match environment")
+                    if adversary.action_space != action_space[1]:
+                        raise ValueError("Loaded adversary agent's action space does not match environment")
+                except Exception as excp:
+                    print(type(excp))
+                    print(excp)
+                    raise Exception("Please input a valid adversary agent or filepath")
+                else:
+                    loaded_adversary = True
+        if not loaded_adversary:
+            adversary.set_up(action_space[index], observation_space[index])
+        if args.disable_adversary_learn:
+            adversary.disableLearning()
+
+        adversaries.append(adversary)
+        index += 1
 
     if args.numTrain < 0:
         raise Exception("Number of games for training cannot be negative")
@@ -119,23 +124,24 @@ def match_args(args):
     if args.numPlay < 0:
         raise Exception("Number of games for play cannot be negative")
 
-    return (environment, player, adversary, args.numTrain, args.numWatch, args.numPlay,
+    return (environment, player, tuple(adversaries), args.numTrain, args.numWatch, args.numPlay,
             args.outfile_player, args.outfile_adversary, args.outfile_env, args.train_watch, args.train_play)
 
 def main(args: list[str] | None =  None):
     torch.set_default_device('mps')
-    (environment, player, adversary, numTrain, numWatch, numPlay,
+    (environment, player, adversaries, numTrain, numWatch, numPlay,
     outfile_player, outfile_adversary, outfile_env, train_watch, train_play) = match_args(parse(args))
 
     print("Training...")
-    environment.runNumGames((player, adversary), numTrain)
+    environment.runNumGames((player, *adversaries), numTrain)
 
     environment.enable_rendering()
     if not train_watch:
         player.disableLearning()
-        adversary.disableLearning()
+        for adversary in adversaries:
+            adversary.disableLearning()
     print("Watching...")
-    environment.runNumGames((player, adversary), numWatch)
+    environment.runNumGames((player, *adversaries), numWatch)
 
     if outfile_player: writeToFile(player, outfile_player, 'p') 
     
@@ -144,12 +150,16 @@ def main(args: list[str] | None =  None):
     player.set_up(temp_action_space)
 
     if not train_play:
-        adversary.disableLearning()
+        for adversary in adversaries:
+            adversary.disableLearning()
     else:
-        adversary.enableLearning()
+        for adversary in adversaries:
+            adversary.enableLearning()
     print("Playing...")
-    environment.runNumGames((player, adversary), numPlay)
-    if outfile_adversary: writeToFile(adversary, outfile_adversary, 'a') 
+    environment.runNumGames((player, *adversaries), numPlay)
+    if outfile_adversary:
+        for adversary, outfile in zip(adversaries, outfile_adversary):
+            writeToFile(adversary, outfile, 'a') 
 
     environment.tear_down()
     if outfile_env: writeToFile(environment, outfile_env, 'e') 

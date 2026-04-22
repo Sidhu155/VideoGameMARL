@@ -25,10 +25,10 @@ def make_file_path(filename, short):
     if not (os.path.exists(path)):
         return path
     else:
-        i = 0
+        i = 2
         while os.path.exists(path + str(i)):
             i += 1
-        return path + str(i)
+        return path + '-' + str(i)
 
 def get_file_path(filename, short):
     return '/'.join((path_objects, short_to_full[short], filename))
