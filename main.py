@@ -17,7 +17,7 @@ def writeToFile(object, filename):
     with open(filename, 'wb') as outp:
         pickle.dump(object, outp)
 
-def loadToFile(filename) -> object:
+def loadFromFile(filename) -> object:
     with open(filename, 'rb') as input:
         return pickle.load(input)
 
@@ -49,7 +49,7 @@ def match_args(args):
             environment = tictactoe.TicTacToe()
         case _:
             try:
-                environment = loadToFile('/'.join((path_objects, "environments", args.environment)))
+                environment = loadFromFile('/'.join((path_objects, "environments", args.environment)))
             except Exception as excp:
                 print(type(excp))
                 print(excp)
@@ -74,7 +74,7 @@ def match_args(args):
             player = RandomAgent()
         case _:
             try:
-                player: Agent = loadToFile('/'.join((path_objects, "players", args.playerAgent)))
+                player: Agent = loadFromFile('/'.join((path_objects, "players", args.playerAgent)))
                 if player.observation_space != observation_space[0]:
                     raise ValueError("Loaded player agent's observation space does not match environment")
                 if player.action_space != action_space[0]:
@@ -104,7 +104,7 @@ def match_args(args):
             adversary = RandomAgent()
         case _:
             try:
-                adversary = loadToFile('/'.join((path_objects, "adversaries", args.adversaryAgent)))
+                adversary = loadFromFile('/'.join((path_objects, "adversaries", args.adversaryAgent)))
                 if adversary.observation_space != observation_space[1]:
                     raise ValueError("Loaded adversary agent's observation space does not match environment")
                 if adversary.action_space != action_space[1]:
@@ -138,14 +138,14 @@ def main(args: list[str] | None =  None):
     save_player, save_adversary, save_env, train_watch, train_play) = match_args(parse(args))
 
     print("Training...")
-    environment.runNumGames(player, adversary, numTrain)
+    environment.runNumGames((player, adversary), numTrain)
 
     environment.enable_rendering()
     if not train_watch:
         player.disableLearning()
         adversary.disableLearning()
     print("Watching...")
-    environment.runNumGames(player, adversary, numWatch)
+    environment.runNumGames((player, adversary), numWatch)
 
     if save_player:
         Path('/'.join((path_objects, "players"))).mkdir(parents=True, exist_ok=True)
@@ -163,7 +163,7 @@ def main(args: list[str] | None =  None):
     else:
         adversary.enableLearning()
     print("Playing...")
-    environment.runNumGames(player, adversary, numPlay)
+    environment.runNumGames((player, adversary), numPlay)
 
     if save_adversary:
         Path('/'.join((path_objects, "adversaries"))).mkdir(parents=True, exist_ok=True)

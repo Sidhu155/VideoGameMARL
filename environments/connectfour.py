@@ -11,28 +11,6 @@ class ConnectFour(Environment):
     Inherits from Environment class
     """
 
-    def __init__(self):
-        super().__init__()
-
-    def run(self, agent0: Agent, agent1: Agent):
-        for agent in self.env.agent_iter():
-            observation, reward, termination, truncation, info = self.env.last()
-            currAgent = agent0 if agent == "player_0" else agent1
-
-            obs = observation["observation"]
-            if termination or truncation:
-                obs = None
-                action = None
-                currAgent.final(reward)
-            else:
-                mask = observation["action_mask"]
-                action = currAgent.get_action(obs, mask)
-
-            currAgent.update(reward, obs, action)
-            self.env.step(action)
-
-        self.env.reset()
-
     def create_env(self, render_type=None):
         self.env = self.env = connect_four_v3.env(render_mode=render_type, screen_scaling=7)
         self.env.reset()

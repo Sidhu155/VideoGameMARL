@@ -1,3 +1,4 @@
+from collections import defaultdict
 from agents.agent import Agent
 from tqdm import tqdm
 
@@ -13,21 +14,44 @@ class Environment:
         """
 
         self.create_env()
+        self.agent_names = [
+            "player_0",
+            "player_1"
+        ]
+        self.logger: defaultdict = defaultdict(list)
 
-    def run(self, agent0: Agent, agent1: Agent):
+    def run(self, agent_list: tuple[Agent]):
         """
         Args:
-            agent0: The player Agent
-            agent1: The adversary agent
+            agent_list: List of agents that interact with the game
 
         Runs one episode of the environment
         At each step, gets actions from the agent by providing current observation.
         Updates agent with current reward and obs.
         """
+        num_iterations = 0
+        for agent in self.env.agent_iter():
+            observation, reward, termination, truncation, info = self.env.last()
+            currAgent = agent_list[self.agent_names.index(agent)]
 
-        pass
+            obs = observation["observation"]
+            if termination or truncation:
+                obs = None
+                action = None
+                currAgent.final(reward)
+            else:
+                mask = observation["action_mask"]
+                action = currAgent.get_action(obs, mask)
 
-    def runNumGames(self, agent0: Agent, agent1: Agent, numGames: int):
+            currAgent.update(reward, obs, action)
+            self.env.step(action)
+
+            num_iterations += 1
+
+        self.logger["num_iterations"].append(num_iterations)
+        self.env.reset()
+
+    def runNumGames(self, agent_list: tuple[Agent], numGames: int):
         """
         Args:
             agent0: The player Agent
@@ -38,7 +62,7 @@ class Environment:
         """
 
         for _ in tqdm(range(numGames)):
-            self.run(agent0, agent1)
+            self.run(agent_list)
 
     def get_action_spaces(self) -> list:
         """
@@ -46,10 +70,8 @@ class Environment:
             List of Action Spaces for each player
         """
 
-        return [
-            self.env.action_space("player_0"),
-            self.env.action_space("player_1")
-        ]
+        return list(self.env.action_space(name)
+                    for name in self.agent_names)
 
     def get_observation_spaces(self) -> list:
         """
@@ -57,10 +79,8 @@ class Environment:
             List of observation spaces for each player
         """
 
-        return [
-            self.env.observation_space("player_0")["observation"],
-            self.env.observation_space("player_1")["observation"]
-        ]
+        return list(self.env.observation_space(name)["observation"]
+                    for name in self.agent_names)
     
     def enable_rendering(self):
         """
