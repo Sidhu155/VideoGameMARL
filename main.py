@@ -37,6 +37,7 @@ def match_args(args):
         case _:
             try:
                 environment: Environment = loadFromFile(args.environment, 'e')
+                assert type(environment) == Environment
             except Exception as excp:
                 print(type(excp))
                 print(excp)
@@ -63,6 +64,7 @@ def match_args(args):
         case _:
             try:
                 player: Agent = loadFromFile(args.playerAgent, 'p')
+                assert type(player) == Agent
                 if player.observation_space != observation_space[0]:
                     raise ValueError("Loaded player agent's observation space does not match environment")
                 if player.action_space != action_space[0]:
@@ -81,9 +83,9 @@ def match_args(args):
 
     adversaries = []
     index = 1
-    for adversary in args.adversaryAgent:
+    for adversary_type in args.adversaryAgent:
         loaded_adversary = False
-        match adversary:
+        match adversary_type:
             case "qTab":
                 adversary = QTabAgent()
             case "sarsaTab":
@@ -96,7 +98,8 @@ def match_args(args):
                 adversary = RandomAgent()
             case _:
                 try:
-                    adversary: Agent = loadFromFile(args.adversaryAgent, 'a')
+                    adversary: Agent = loadFromFile(adversary_type, 'a')
+                    assert type(adversary) == Agent
                     if adversary.observation_space != observation_space[1]:
                         raise ValueError("Loaded adversary agent's observation space does not match environment")
                     if adversary.action_space != action_space[1]:
