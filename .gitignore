@@ -6,3 +6,4 @@ __pycache__
 .coverage
 /htmlcov
 /saved_objects
+/results

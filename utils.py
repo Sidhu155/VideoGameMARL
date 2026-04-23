@@ -11,9 +11,9 @@ def assert_agent_set_up(func):
 def time_func(func_name: str):
     def timed_func(func):
         def decorator(obj, *args, **kwargs):
-            start = time.perf_counter()
+            start = time.perf_counter_ns()
             return_val = func(obj, *args, **kwargs)
-            end = time.perf_counter()
+            end = time.perf_counter_ns()
             obj.logger[func_name].append(end - start)
             return return_val
         return decorator

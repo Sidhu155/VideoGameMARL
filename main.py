@@ -143,6 +143,10 @@ def main(args: list[str] | None =  None):
         player.disableLearning()
         for adversary in adversaries:
             adversary.disableLearning()
+    else:
+        player.enableLearning()
+        for adversary in adversaries:
+            adversary.enableLearning()
     print("Watching...")
     environment.runNumGames((player, *adversaries), numWatch)
 
@@ -151,7 +155,6 @@ def main(args: list[str] | None =  None):
     temp_action_space = player.action_space
     player = PlayerAgent()
     player.set_up(temp_action_space)
-
     if not train_play:
         for adversary in adversaries:
             adversary.disableLearning()
@@ -160,6 +163,7 @@ def main(args: list[str] | None =  None):
             adversary.enableLearning()
     print("Playing...")
     environment.runNumGames((player, *adversaries), numPlay)
+    
     if outfile_adversary:
         for adversary, outfile in zip(adversaries, outfile_adversary):
             writeToFile(adversary, outfile, 'a') 

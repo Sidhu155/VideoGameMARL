@@ -11,6 +11,7 @@ short_to_full = {
 Path('/'.join((path_objects, "players"))).mkdir(parents=True, exist_ok=True)
 Path('/'.join((path_objects, "adversaries"))).mkdir(parents=True, exist_ok=True)
 Path('/'.join((path_objects, "environments"))).mkdir(parents=True, exist_ok=True)
+Path("results").mkdir(parents=True, exist_ok=True)
 
 def writeToFile(object: object, filename: str, short: str):
     with open(make_file_path(filename, short), 'wb') as outp:
@@ -21,14 +22,18 @@ def loadFromFile(filename, short) -> object:
         return pickle.load(input)
 
 def make_file_path(filename, short):
-    path = '/'.join((path_objects, short_to_full[short], filename))
-    if not (os.path.exists(path)):
-        return path
-    else:
-        i = 2
-        while os.path.exists(path + str(i)):
-            i += 1
-        return path + '-' + str(i)
+    return '/'.join((path_objects, short_to_full[short], filename))
 
 def get_file_path(filename, short):
     return '/'.join((path_objects, short_to_full[short], filename))
+
+def make_results_path(dir_name: str):
+    path = '/'.join(("results", dir_name))
+    if (os.path.exists(path)):
+        i = 2
+        while os.path.exists(path + str(i)):
+            i += 1
+        path = path + str(i)
+    
+    Path(path).mkdir(parents=True, exist_ok=True)
+    return path
