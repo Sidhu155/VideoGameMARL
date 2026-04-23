@@ -31,7 +31,8 @@ class BaseTestAgent:
 
     def test_set_up(self, agent: Agent, action_space: Space, observation_space: Space):
         agent.set_up(action_space, observation_space, seed=self.get_seed_val())
-        assert agent.action_space == action_space 
+        assert agent.action_space == action_space
+        assert agent.observation_space == observation_space
         assert agent.action_space.sample() == 0
 
     def test_set_up_already_set_up(self, set_up_agent: Agent, action_space: Space, observation_space: Space):

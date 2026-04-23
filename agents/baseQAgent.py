@@ -43,8 +43,6 @@ class BaseQValAgent(Agent):
         self.prevObs = None
         self.prevAction = None
 
-        self.num_updates = 0
-
     def set_up(self,
                action_space: Space,
                observation_space: Space | None = None,
@@ -147,7 +145,7 @@ class BaseQValAgent(Agent):
         Use learning rate and temporal-difference to update future q-value estimates
         """
 
-        self.num_updates += 1
+        pass
 
     @assert_agent_set_up
     def get_next_q(self, obs: np.ndarray, action: int) -> float:
