@@ -1,7 +1,7 @@
 from gymnasium.spaces import Space
 import numpy as np
 from .baseQAgent import BaseQValAgent
-from .decorators import assert_agent_set_up, time_func
+from utils import assert_agent_set_up
 from .qMixins import QLearnMixin, SARSAMixin
 
 class FuncApprox(BaseQValAgent):
@@ -35,14 +35,12 @@ class FuncApprox(BaseQValAgent):
         self.numFeatures = np.prod(observation_space.shape)
         self.q_function = self.getDefaultFunc()
 
-    @time_func("get_q_value")
     @assert_agent_set_up
     def get_q_value(self, obs: np.ndarray, action: int) -> float:
         super().get_q_value(obs, action)
         vector = self.obs_to_feature_vector(obs, action)
         return vector @ self.q_function
     
-    @time_func("update_q_value")
     @assert_agent_set_up
     def update_q_value(self, curr_q: float, temporal_difference: float) -> None:
         super().update_q_value(curr_q, temporal_difference)

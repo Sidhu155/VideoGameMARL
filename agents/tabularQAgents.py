@@ -2,7 +2,7 @@ from collections import defaultdict
 from gymnasium.spaces import Space
 import numpy as np
 from .baseQAgent import BaseQValAgent
-from .decorators import assert_agent_set_up, time_func
+from utils import assert_agent_set_up
 from .qMixins import QLearnMixin, SARSAMixin
 
 class Tabular(BaseQValAgent):
@@ -34,13 +34,11 @@ class Tabular(BaseQValAgent):
         super().set_up(action_space, observation_space, seed=seed)
         self.q_values = defaultdict(self.getDefaultVals)
 
-    @time_func("get_q_value")
     @assert_agent_set_up
     def get_q_value(self, obs: np.ndarray, action: int) -> float:
         super().get_q_value(obs, action)
         return self.q_values[obs.tobytes()][action]
     
-    @time_func("update_q_value")
     @assert_agent_set_up
     def update_q_value(self, curr_q: float, temporal_difference: float) -> None:
         super().update_q_value(curr_q, temporal_difference)

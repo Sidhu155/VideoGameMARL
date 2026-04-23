@@ -2,7 +2,7 @@ from gymnasium.spaces import Space
 import numpy as np
 import random
 from .agent import Agent
-from .decorators import assert_agent_set_up, time_func
+from utils import assert_agent_set_up, time_func
 
 class BaseQValAgent(Agent):
     """

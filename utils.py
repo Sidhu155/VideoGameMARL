@@ -8,7 +8,7 @@ def assert_agent_set_up(func):
             raise Exception("Agent has not been set up!")
     return decorator
 
-def time_func(func_name):
+def time_func(func_name: str):
     def timed_func(func):
         def decorator(obj, *args, **kwargs):
             start = time.perf_counter()

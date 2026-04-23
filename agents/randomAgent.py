@@ -1,5 +1,5 @@
 from .agent import Agent
-from .decorators import assert_agent_set_up
+from utils import assert_agent_set_up
 
 class RandomAgent(Agent):
 

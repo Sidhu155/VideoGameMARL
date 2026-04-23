@@ -1,7 +1,7 @@
 from collections import defaultdict
 from gymnasium.spaces import Space
 import numpy as np
-from .decorators import assert_agent_set_up
+from utils import assert_agent_set_up
 
 class Agent:
     """

@@ -1,6 +1,7 @@
 from collections import defaultdict
 from agents.agent import Agent
 from tqdm import tqdm
+from utils import time_func
 
 class Environment:
     """
@@ -20,6 +21,7 @@ class Environment:
         ]
         self.logger: defaultdict = defaultdict(list)
 
+    @time_func("run")
     def run(self, agent_list: tuple[Agent]):
         """
         Args:
