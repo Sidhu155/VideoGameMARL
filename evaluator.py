@@ -7,15 +7,38 @@ from agents.agent import Agent
 from environments.environment import Environment
 
 class Evaluator:
-    def __init__(self, path, window):
+    def __init__(self, path: str, window: int) -> None:
+        """
+        Args:
+            path: The path that the evaluator saves the results in
+            window: The rolling window used when plotting moving averages
+        """
+
         self.path = path
         self.window = window
 
-    def plotMovingAverage(self, values, label):
+    def plotMovingAverage(self, values: list, label: str) -> None:
+        """
+        Args:
+            values: A
+            label: The label for the line being drawn. This is included in the legend of the plot
+        
+        Plot a moving average onto the graph based on the values provided.
+        """
+
         values_moving_average = np.convolve(np.array(values), np.ones(self.window), mode="valid")/self.window
         plt.plot(values_moving_average, label=label)
 
-    def plotAgents(self, agents: list[Agent], names: list[str]):
+    def plotAgents(self, agents: list[Agent], names: list[str]) -> None:
+        """
+        Args:
+            agents: A list of agents
+            names: A list of names for the agents
+        
+        Plots graphs based on information from the loggers of the agents. Saves these graphs to
+        the directory provided to the evaluator object
+        """
+
         plots = [
             {"title": "Moving Average of Time taken for Get Action Method", "logger_param": "get_action",
              "xlabel": "Number of get action calls", "ylabel": "Average Time Taken(nanoseconds)",
@@ -30,7 +53,7 @@ class Evaluator:
              "xlabel": "Number of updates", "ylabel": "Average Training error",
              "filename": "training-error"}
         ]
-        
+
         for plot in plots:
             plt.title(plot["title"])
             plt.xlabel(plot["xlabel"])
@@ -40,7 +63,16 @@ class Evaluator:
                     self.plotMovingAverage(agent.logger[plot["logger_param"]], name)
             self.saveResult(plot["filename"])
 
-    def plotEnvironments(self, environments: list[Environment], names: list[str]):
+    def plotEnvironments(self, environments: list[Environment], names: list[str]) -> None:
+        """
+        Args:
+            environments: A list of environments
+            names: A list of names for the environments
+        
+        Plots graphs based on information from the loggers of the environments. Saves these graphs to
+        the directory provided to the evaluator object
+        """
+
         plots = [
             {"title": "Moving Average of Number of Iterations", "logger_param": "num_iterations",
              "xlabel": "Episode Number", "ylabel": "Average Number of Iterations", "filename": "iterations"},
@@ -56,7 +88,14 @@ class Evaluator:
                     self.plotMovingAverage(env.logger[plot["logger_param"]], name)
             self.saveResult(plot["filename"])
     
-    def saveResult(self, filename):
+    def saveResult(self, filename: str) -> None:
+        """
+        Args:
+            filename: A string indicating what name to save the file under
+            
+        Saves the current plot under the filename and inside the directory provided to the evaluator object
+        """
+        
         plt.legend()
         plt.savefig(self.path + f"/{filename}", dpi=300, bbox_inches='tight')
         plt.close()
