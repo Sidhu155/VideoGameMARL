@@ -1,9 +1,9 @@
 from .agent import Agent
+from utils import assert_agent_set_up
 
 class PlayerAgent(Agent):
-    def __init__(self):
-        super().__init__()
     
+    @assert_agent_set_up
     def get_action(self, obs, mask):
         print("Possible Actions")
         possible_actions = []
@@ -29,6 +29,3 @@ class PlayerAgent(Agent):
                     print("This action is invalid. Please choose another")
                     action = None
         return action
-    
-    def set_up(self, action_space):
-        super().set_up(action_space)
