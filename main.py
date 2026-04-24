@@ -138,7 +138,9 @@ def main(args: list[str] | None =  None):
     print("Training...")
     environment.runNumGames((player, *adversaries), numTrain)
 
-    environment.enable_rendering()
+    if numWatch > 0 or numPlay > 0:
+        environment.enable_rendering()
+    
     if not train_watch:
         player.disableLearning()
         for adversary in adversaries:
