@@ -135,7 +135,7 @@ class DotsAndBoxesEnvironment(AECEnv):
     
     def observe(self, agent):
         return {
-            "observation": np.copy(self.board), #May be able to remove copy
+            "observation": self.board,
             "action_mask": self._get_mask(agent)
         }
     
@@ -156,6 +156,6 @@ class DotsAndBoxesEnvironment(AECEnv):
         # Per the documentation, the mask of any agent other than the
         # currently selected one is all zeros.
         if agent == self.agent_selection:
-            return np.copy(self.board)
+            return self.board
         else:
             return np.zeros(self.board_size, dtype=np.int8)
