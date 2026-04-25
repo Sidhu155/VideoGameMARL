@@ -105,7 +105,7 @@ def main(args: list[str] | None = None):
     parser = ArgumentParser()
     parser.add_argument("type", choices=["environment", "player", "adversary"])
     parser.add_argument("-o", "--objects", nargs='+', type=str)
-    parser.add_argument("-n", "--names", nargs='+', type=str)
+    parser.add_argument("-n", "--names", nargs='*', type=str, default=[])
     parser.add_argument("-d", "--destination", default="res", type=str)
     parser.add_argument("-w", "--window-size", default="1000", type=int)
     parsed_args = parser.parse_args(args)
@@ -115,8 +115,10 @@ def main(args: list[str] | None = None):
     
     eval = Evaluator(make_results_path(parsed_args.destination), 1000)
 
-    if len(parsed_args.objects) != len(parsed_args.names):
-        raise Exception("The number of objects and number of names must be equal")
+    if len(parsed_args.objects) < len(parsed_args.names):
+        parsed_args.names = parsed_args.names[:len(parsed_args.objects)]
+    elif len(parsed_args.objects) > len(parsed_args.names):
+        parsed_args.names.extend(parsed_args.objects[len(parsed_args.names):])
     
     if parsed_args.type == "environment":
         envs = []

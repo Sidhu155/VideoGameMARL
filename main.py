@@ -4,7 +4,7 @@ import torch
 from argparse import ArgumentParser
 from file import writeToFile, loadFromFile
 from environments.environment import Environment
-from environments import connectfour, tictactoe
+from environments import connectfour, tictactoe, dotsAndBoxes
 from agents.agent import Agent
 from agents.tabularQAgents import QTabAgent, SARSATabAgent
 from agents.funcQAgents import QFuncApproxAgent, SARSAFuncApproxAgent
@@ -34,10 +34,12 @@ def match_args(args):
             environment = connectfour.ConnectFour()
         case "tictactoe":
             environment = tictactoe.TicTacToe()
+        case "dotsandboxes":
+            environment = dotsAndBoxes.DotsAndBoxes(len(args.adversaryAgent) + 1, 3)
         case _:
             try:
                 environment: Environment = loadFromFile(args.environment, 'e')
-                assert isinstance(player, Environment)
+                assert isinstance(environment, Environment)
             except Exception as excp:
                 print(type(excp))
                 print(excp)
@@ -69,6 +71,7 @@ def match_args(args):
                     raise ValueError("Loaded player agent's observation space does not match environment")
                 if player.action_space != action_space[0]:
                     raise ValueError("Loaded player agent's action space does not match environment")
+                player.enableLearning()
             except Exception as excp:
                 print(type(excp))
                 print(excp)
@@ -104,6 +107,7 @@ def match_args(args):
                         raise ValueError("Loaded adversary agent's observation space does not match environment")
                     if adversary.action_space != action_space[1]:
                         raise ValueError("Loaded adversary agent's action space does not match environment")
+                    adversary.enableLearning()
                 except Exception as excp:
                     print(type(excp))
                     print(excp)
