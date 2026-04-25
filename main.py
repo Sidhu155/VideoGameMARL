@@ -1,6 +1,4 @@
-import os
 import sys
-import torch
 from argparse import ArgumentParser
 from file import writeToFile, loadFromFile
 from environments.environment import Environment
@@ -35,7 +33,7 @@ def match_args(args):
         case "tictactoe":
             environment = tictactoe.TicTacToe()
         case "dotsandboxes":
-            environment = dotsAndBoxes.DotsAndBoxes(len(args.adversaryAgent) + 1, 3)
+            environment = dotsAndBoxes.DotsAndBoxes(num_agents=len(args.adversaryAgent) + 1, board_length=5)
         case _:
             try:
                 environment: Environment = loadFromFile(args.environment, 'e')
@@ -135,7 +133,6 @@ def match_args(args):
             args.outfile_player, args.outfile_adversary, args.outfile_env, args.train_watch, args.train_play)
 
 def main(args: list[str] | None =  None):
-    torch.set_default_device('mps')
     (environment, player, adversaries, numTrain, numWatch, numPlay,
     outfile_player, outfile_adversary, outfile_env, train_watch, train_play) = match_args(parse(args))
 
