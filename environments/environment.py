@@ -14,12 +14,12 @@ class Environment:
         Initialise environment
         """
 
-        self.create_env()
         self.agent_names = [
             "player_0",
             "player_1"
         ]
         self.logger: defaultdict = defaultdict(list)
+        self.create_env()
 
     @time_func("run")
     def run(self, agent_list: tuple[Agent]):
