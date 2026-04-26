@@ -47,6 +47,7 @@ class FuncApprox(BaseQValAgent):
         obs_vector = self.obs_to_feature_vector(self.prevObs, self.prevAction)
         self.q_function += (obs_vector * (self.lr * temporal_difference))
 
+    @assert_agent_set_up
     def get_max_q_value(self, obs):
         if obs.size != self.numFeatures:
             raise ValueError(f"Observation has size {obs.size} but size {self.numFeatures} is required!")
