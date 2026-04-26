@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from collections import defaultdict
+from logger import Logger
 from gymnasium.spaces import Space, Discrete, Box
 from agents.agent import Agent
 from tests.agents.conftest import parametrize_final_reward, parametrize_learn_bool
@@ -27,7 +27,7 @@ class BaseTestAgent:
     def test_init(self, agent: Agent):
         assert agent.learning == True
         assert agent.set_up_bool == False
-        assert type(agent.logger) == defaultdict
+        assert type(agent.logger) == Logger
 
     def test_set_up(self, agent: Agent, action_space: Space, observation_space: Space):
         agent.set_up(action_space, observation_space, seed=self.get_seed_val())
@@ -47,7 +47,7 @@ class BaseTestAgent:
                 set_up_agent.final(val)
             except ValueError as e:
                 assert type(val) != float
-        assert set_up_agent.logger["record"] == expected_record
+        assert set_up_agent.logger.getLogs("record") == expected_record
 
     def test_final_without_set_up(self, agent: Agent):
         with pytest.raises(Exception) as excp:
@@ -85,12 +85,12 @@ class TestAgent(BaseTestAgent):
         assert set_up_agent.get_action(np.array([0, 1, 1, 0]), np.array([0, 0, 1, 1])) == None
         assert set_up_agent.action_space == action_space
         assert set_up_agent.learning
-        assert set_up_agent.logger["record"] == []
+        assert set_up_agent.logger.getLogs("record") == []
         assert set_up_agent.set_up_bool
 
     def test_update(self, set_up_agent: Agent, action_space: Space):
         assert set_up_agent.update(10.0, np.array([0, 1, 1, 0]), 1) == None
         assert set_up_agent.action_space == action_space
         assert set_up_agent.learning
-        assert set_up_agent.logger["record"] == []
+        assert set_up_agent.logger.getLogs("record") == []
         assert set_up_agent.set_up_bool

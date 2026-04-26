@@ -15,7 +15,7 @@ class BaseTestFuncApprox(BaseTestAgent):
         super().test_init(agent)
         assert agent.prevAction is None
         assert agent.prevObs is None
-        assert agent.logger["training_error"] == []
+        assert agent.logger.getLogs("training_error") == []
 
     def test_set_up(self, agent: FuncApprox, action_space: Space, observation_space:Space):
         assert not hasattr(agent, 'q_function')
