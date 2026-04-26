@@ -1,4 +1,4 @@
-from collections import defaultdict
+from logger import Logger
 from gymnasium.spaces import Space
 import numpy as np
 from utils import assert_agent_set_up
@@ -15,7 +15,7 @@ class Agent:
 
         self.learning = True
         self.set_up_bool = False
-        self.logger: defaultdict = defaultdict(list)
+        self.logger = Logger()
     
     def set_up(self,
                action_space: Space, 
@@ -80,7 +80,7 @@ class Agent:
         except ValueError:
             raise ValueError(f"Final episode reward not a float value. Actual Type: {type(reward)}. Reward: {reward}")
         else:
-            self.logger["record"].append(float(reward))
+            self.logger.updateLogs("record", reward)
 
     def enableLearning(self) -> None:
         """

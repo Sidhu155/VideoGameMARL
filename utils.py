@@ -24,7 +24,7 @@ def time_func(func_name: str):
             start = time.perf_counter_ns()
             return_val = func(obj, *args, **kwargs)
             end = time.perf_counter_ns()
-            obj.logger[func_name].append(end - start)
+            obj.logger.updateLogs(func_name, end - start)
             return return_val
         return decorator
     return timed_func

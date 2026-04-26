@@ -59,8 +59,8 @@ class Evaluator:
             plt.xlabel(plot["xlabel"])
             plt.ylabel(plot["ylabel"])
             for agent, name in zip(agents, names):
-                if plot["logger_param"] in agent.logger:
-                    self.plotMovingAverage(agent.logger[plot["logger_param"]], name)
+                if agent.logger.hasKeyInLogs(plot["logger_param"]):
+                    self.plotMovingAverage(agent.logger.getLogs(plot["logger_param"]), name)
             self.saveResult(plot["filename"])
 
     def plotEnvironments(self, environments: list[Environment], names: list[str]) -> None:
@@ -84,8 +84,8 @@ class Evaluator:
             plt.xlabel(plot["xlabel"])
             plt.ylabel(plot["ylabel"])
             for env, name in zip(environments, names):
-                if plot["logger_param"] in env.logger:
-                    self.plotMovingAverage(env.logger[plot["logger_param"]], name)
+                if env.logger.hasKeyInLogs(plot["logger_param"]):
+                    self.plotMovingAverage(env.logger.getLogs(plot["logger_param"]), name)
             self.saveResult(plot["filename"])
     
     def saveResult(self, filename: str) -> None:

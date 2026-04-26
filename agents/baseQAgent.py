@@ -97,7 +97,7 @@ class BaseQValAgent(Agent):
             temporal_difference = target - curr_q
             self.update_q_value(curr_q, temporal_difference)
 
-            self.logger["training_error"].append(temporal_difference)
+            self.logger.updateLogs("training_error", temporal_difference)
         
         self.prevObs = obs
         self.prevAction = action

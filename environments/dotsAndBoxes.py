@@ -1,5 +1,4 @@
 import numpy as np
-from collections import defaultdict
 from .environment import Environment
 from gymnasium.spaces import Discrete, Dict, Box
 from pettingzoo import AECEnv

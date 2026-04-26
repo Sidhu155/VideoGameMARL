@@ -1,4 +1,4 @@
-from collections import defaultdict
+from logger import Logger
 from agents.agent import Agent
 from tqdm import tqdm
 from utils import time_func
@@ -18,7 +18,7 @@ class Environment:
             "player_0",
             "player_1"
         ]
-        self.logger: defaultdict = defaultdict(list)
+        self.logger = Logger()
         self.create_env()
 
     @time_func("run")
@@ -50,7 +50,7 @@ class Environment:
 
             num_iterations += 1
 
-        self.logger["num_iterations"].append(num_iterations)
+        self.logger.updateLogs("num_iterations", num_iterations)
         self.env.reset()
 
     def runNumGames(self, agent_list: tuple[Agent], numGames: int):
