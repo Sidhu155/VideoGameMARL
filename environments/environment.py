@@ -32,15 +32,19 @@ class Environment:
         Updates agent with current reward and obs.
         """
         num_iterations = 0
+        rewards = list(0 for _ in range(len(agent_list)))
         for agent in self.env.agent_iter():
             observation, reward, termination, truncation, info = self.env.last()
-            currAgent = agent_list[self.agent_names.index(agent)]
+            
+            agent_idx = self.agent_names.index(agent)
+            currAgent = agent_list[agent_idx]
+            rewards[agent_idx] += reward
 
             obs = observation["observation"]
             if termination or truncation:
                 obs = None
                 action = None
-                currAgent.final(reward)
+                currAgent.final(rewards[agent_idx])
             else:
                 mask = observation["action_mask"]
                 action = currAgent.get_action(obs, mask)
