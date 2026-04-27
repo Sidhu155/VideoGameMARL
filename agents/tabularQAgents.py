@@ -40,10 +40,10 @@ class Tabular(BaseQValAgent):
         return self.q_values[obs.tobytes()][action]
     
     @assert_agent_set_up
-    def update_q_value(self, curr_q: float, temporal_difference: float) -> None:
-        super().update_q_value(curr_q, temporal_difference)
+    def update_q_value(self, obs: np.ndarray, action: int, curr_q: float, temporal_difference: float) -> None:
+        super().update_q_value(obs, action, curr_q, temporal_difference)
         new_q = curr_q + (self.lr * temporal_difference)
-        self.q_values[self.prevObs.tobytes()][self.prevAction]= new_q
+        self.q_values[obs.tobytes()][action]= new_q
 
     @assert_agent_set_up
     def getDefaultVals(self) -> np.ndarray:

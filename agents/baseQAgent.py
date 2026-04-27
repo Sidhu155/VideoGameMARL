@@ -95,7 +95,7 @@ class BaseQValAgent(Agent):
             
             target = reward + (self.discount_factor * next_q)
             temporal_difference = target - curr_q
-            self.update_q_value(curr_q, temporal_difference)
+            self.update_q_value(self.prevObs, self.prevAction, curr_q, temporal_difference)
 
             self.logger.updateLogs("training_error", temporal_difference)
         
@@ -136,7 +136,7 @@ class BaseQValAgent(Agent):
         return max(self.get_q_value(obs, action) for action in range(self.numActions))
 
     @assert_agent_set_up
-    def update_q_value(self, curr_q: float, temporal_difference: float) -> None:
+    def update_q_value(self, obs: np.ndarray, action: int, curr_q: float, temporal_difference: float) -> None:
         """
         Args:
             curr_q: The current q-value of the previous observation

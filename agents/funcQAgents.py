@@ -42,9 +42,9 @@ class FuncApprox(BaseQValAgent):
         return vector @ self.q_function
     
     @assert_agent_set_up
-    def update_q_value(self, curr_q: float, temporal_difference: float) -> None:
-        super().update_q_value(curr_q, temporal_difference)
-        obs_vector = self.obs_to_feature_vector(self.prevObs, self.prevAction)
+    def update_q_value(self, obs: np.ndarray, action: int, curr_q: float, temporal_difference: float) -> None:
+        super().update_q_value(obs, action, curr_q, temporal_difference)
+        obs_vector = self.obs_to_feature_vector(obs, action)
         self.q_function += (obs_vector * (self.lr * temporal_difference))
 
     @assert_agent_set_up

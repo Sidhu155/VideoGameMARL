@@ -151,10 +151,9 @@ class BaseTestFuncApprox(BaseTestAgent):
     
     def test_update_q_val(self, set_up_agent: FuncApprox):
         obs = np.array([[[1, 2]]])
-        set_up_agent.prevObs = obs
-        set_up_agent.prevAction = 2
+        action = 2
         set_up_agent.q_function = np.array([0, 1, 3, 0, 2.1, 4.2, 1.1, 3, 2])
-        set_up_agent.update_q_value(12.5, -10)
+        set_up_agent.update_q_value(obs, action, 12.5, -10)
 
         assert np.array_equal(set_up_agent.q_function[:4], np.array([0, 1, 3, 0]))
         assert pytest.approx(set_up_agent.q_function[4]) == 2.1 + (set_up_agent.lr * -10) * 1
@@ -163,8 +162,10 @@ class BaseTestFuncApprox(BaseTestAgent):
         assert set_up_agent.q_function[8] == 2 + (set_up_agent.lr * -10)
 
     def test_update_q_val_without_set_up(self, agent: FuncApprox):
+        obs = np.array([[[1, 2]]])
+        action = 2
         with pytest.raises(Exception) as excp:
-            agent.update_q_value(10, 20)
+            agent.update_q_value(obs, action, 10, 20)
         assert "Agent has not been set up!" in str(excp.value)
 
     def test_obs_to_vector(self, set_up_agent: FuncApprox):

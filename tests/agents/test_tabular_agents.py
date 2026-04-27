@@ -148,15 +148,13 @@ class BaseTestTabular(BaseTestAgent):
 
     @parametrize_q_table
     def test_update_q_val(self, set_up_agent: Tabular, obs, utilities, action, action_util, max_util, new_util):
-        set_up_agent.prevObs = obs
-        set_up_agent.prevAction = action
         set_up_agent.q_values[obs.tobytes()] == utilities
-        set_up_agent.update_q_value(utilities[action], (new_util - utilities[action])/set_up_agent.lr)
+        set_up_agent.update_q_value(obs, action, utilities[action], (new_util - utilities[action])/set_up_agent.lr)
         assert set_up_agent.q_values[obs.tobytes()][action] == new_util
 
     def test_update_q_val_without_set_up(self, agent: Tabular):
         with pytest.raises(Exception) as excp:
-            agent.update_q_value(10, 20)
+            agent.update_q_value(np.array([1, 0]), 1, 10, 20)
         assert "Agent has not been set up!" in str(excp.value)
 
     def test_get_default_vals(self, set_up_agent: Tabular):
