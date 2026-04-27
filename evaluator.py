@@ -1,6 +1,7 @@
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
+import csv
 from argparse import ArgumentParser
 from file import loadFromFile, make_results_path
 from agents.agent import Agent
@@ -16,8 +17,10 @@ class Evaluator:
 
         self.path = path
         self.window = window
+        self.writer = csv.writer(open(self.path + '/data.csv', 'w', newline=''))
+        self.writer.writerow(self.getCSVHeaders())
 
-    def plotMovingAverage(self, values: list, label: str) -> None:
+    def plotMovingAverage(self, values: np.ndarray, label: str) -> None:
         """
         Args:
             values: A
@@ -26,7 +29,7 @@ class Evaluator:
         Plot a moving average onto the graph based on the values provided.
         """
 
-        values_moving_average = np.convolve(np.array(values), np.ones(self.window), mode="valid")/self.window
+        values_moving_average = np.convolve(values, np.ones(self.window), mode="valid")/self.window
         plt.plot(values_moving_average, label=label)
 
     def plotAgents(self, agents: list[Agent], names: list[str]) -> None:
@@ -60,7 +63,9 @@ class Evaluator:
             plt.ylabel(plot["ylabel"])
             for agent, name in zip(agents, names):
                 if agent.logger.hasKeyInLogs(plot["logger_param"]):
-                    self.plotMovingAverage(agent.logger.getLogs(plot["logger_param"]), name)
+                    log = np.array(agent.logger.getLogs(plot["logger_param"]), dtype=np.float32)
+                    self.plotMovingAverage(log, name)
+                    self.writeLogToCSV(name, plot["logger_param"], log)
             self.saveResult(plot["filename"])
 
     def plotEnvironments(self, environments: list[Environment], names: list[str]) -> None:
@@ -85,7 +90,9 @@ class Evaluator:
             plt.ylabel(plot["ylabel"])
             for env, name in zip(environments, names):
                 if env.logger.hasKeyInLogs(plot["logger_param"]):
-                    self.plotMovingAverage(env.logger.getLogs(plot["logger_param"]), name)
+                    log = np.array(env.logger.getLogs(plot["logger_param"]))
+                    self.plotMovingAverage(log, name)
+                    self.writeLogToCSV(name, plot["logger_param"], log)
             self.saveResult(plot["filename"])
     
     def saveResult(self, filename: str) -> None:
@@ -99,6 +106,21 @@ class Evaluator:
         plt.legend()
         plt.savefig(self.path + f"/{filename}", dpi=300, bbox_inches='tight')
         plt.close()
+
+    def writeLogToCSV(self, name: str, param: str, log: np.ndarray):
+        num_data_points = len(log)
+        min = np.min(log)
+        median = np.median(log)
+        mean = np.mean(log)
+        max = np.max(log)
+        std = np.std(log)
+        self.writer.writerow([name, param, num_data_points, min, median, mean, max, std])
+
+    def getCSVHeaders(self) -> list[str]:
+        return [
+            'Name', 'Parameter', 'Num Data Points', 
+            'Min', 'Median', 'Mean', 'Max', 'Standard Deviation'
+        ]
 
 
 def main(args: list[str] | None = None):
