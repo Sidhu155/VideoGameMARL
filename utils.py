@@ -1,4 +1,6 @@
 import time
+import os
+import psutil
 
 
 def assert_agent_set_up(func):
@@ -14,17 +16,38 @@ def assert_agent_set_up(func):
             raise Exception("Agent has not been set up!")
     return decorator
 
-def time_func(func_name: str):
+def time_func(log_name: str):
     """
     A decorator used to time functions and append this information to the objects logger.
     """
     
     def timed_func(func):
         def decorator(obj, *args, **kwargs):
-            start = time.perf_counter_ns()
-            return_val = func(obj, *args, **kwargs)
-            end = time.perf_counter_ns()
-            obj.logger.updateLogs(func_name, end - start)
+            if obj.logger.logging and obj.logger.hasKeyInLogs(log_name):
+                start = time.perf_counter()
+                return_val = func(obj, *args, **kwargs)
+                end = time.perf_counter()
+                obj.logger.updateLogs(log_name, end - start)
+            else:
+                return_val = func(obj, *args, **kwargs)
             return return_val
         return decorator
     return timed_func
+
+def log_memory_func(log_name: str):
+
+    def memory_logger_func(func):
+        def decorator(obj, *args, **kwargs):
+            if obj.logger.logging and obj.logger.hasKeyInLogs(log_name):
+                process = psutil.Process(os.getpid())
+                
+                before = process.memory_info().rss
+                return_val = func(obj, *args, **kwargs)
+                after = process.memory_info().rss
+
+                obj.logger.updateLogs(log_name, ((after + before)/2)/(1024 ** 2))
+            else:
+                return_val = func(obj, *args, **kwargs)
+            return return_val
+        return decorator
+    return memory_logger_func
