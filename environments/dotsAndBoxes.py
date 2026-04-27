@@ -56,6 +56,8 @@ class DotsAndBoxesEnvironment(AECEnv):
             self._was_dead_step(action)
             return
         
+        self.rewards = {agent: 0 for agent in self.agents}
+        
         assert self.board[action] == 1, "Invalid action selected"
         self.board[action] = 0
 
@@ -90,12 +92,12 @@ class DotsAndBoxesEnvironment(AECEnv):
         if reward_agent == 0:
             self.agent_selection = self._agent_selector.next()
         else:
-            self.rewards[agent] += reward_agent
+            self.rewards[agent] = reward_agent
             if self.agents.index(agent) == 0:
                 for agent_idx in range(1, len(self.agents)):
-                    self.rewards[self.agents[agent_idx]] -= reward_agent
+                    self.rewards[self.agents[agent_idx]] = -1 * reward_agent
             else:
-                self.rewards[self.agents[0]] -= reward_agent
+                self.rewards[self.agents[0]] = -1 * reward_agent
             self._accumulate_rewards()
         
         self.num_moves += 1
@@ -134,7 +136,7 @@ class DotsAndBoxesEnvironment(AECEnv):
     
     def observe(self, agent):
         return {
-            "observation": self.board,
+            "observation": np.copy(self.board),
             "action_mask": self._get_mask(agent)
         }
     
@@ -155,6 +157,6 @@ class DotsAndBoxesEnvironment(AECEnv):
         # Per the documentation, the mask of any agent other than the
         # currently selected one is all zeros.
         if agent == self.agent_selection:
-            return self.board
+            return np.copy(self.board)
         else:
             return np.zeros(self.board_size, dtype=np.int8)
