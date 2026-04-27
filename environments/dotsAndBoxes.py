@@ -17,6 +17,62 @@ class DotsAndBoxes(Environment):
         self.env.reset()
 
 class DotsAndBoxesEnvironment(AECEnv):
+    """
+    An environment based on the dots and boxes game. Takes place on a square
+    board where horizontal or vertical lines can be drawn between adjacent
+    co-ordinates. If a square is created upon the drawing of a line, the agent
+    gains a point and gets another turn. 
+    |--------------------|-----------------------------------------------|
+    | Actions            | Discrete                                      |
+    | Parallel API       | No                                            |
+    | Manual Control     | No                                            |
+    | Agents             | `agents= ['player_0', 'player_1', ...]`       |
+    | Agents             | >= 2                                          |
+    | Action Shape       | (1,)                                          |
+    | Action Values      | [0, board_length * (board_length - 1) * 2]    |
+    | Observation Shape  | (board_length * (board_length - 1) * 2)       |
+    | Observation Values | [0,1]                                         |
+
+    Observation:
+    Implemented as a flat array where the first half represents vertical lines and the second half
+    represents horizontal lines. If there is a line present, the observation will show a zero, if
+    a line is yet to be drawn, a one. This may be counterintuitive, however, this allows the action
+    mask to be a one to one copy of the observation.
+
+    A game with board_length 3 could have an observation as such:
+    [0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0]
+                       ^ horizontal lines begin here
+
+    In a more understandable manner:
+    [   [   [0, 1, 0]           This represents the vertical lines on the board. The first row
+            [1, 0, 1]]          shows a 1 in the middle column. This indicates a vertical line can be drawn
+
+        [   [1, 1]              This represents the horizontal lines on the board. The second
+            [0, 1]              row shows a 0 in the first column. This means that a line has already
+            [1, 0]  ]]          been drawn here
+
+    Drawn as a board:           
+            .  .  .             The horizontal lines span 3 rows and 2 columns, whereas the vertical
+            |__.  |             lines span 2 rows and one column. This aligns with their shape above.
+            .  |__.
+
+    Actions:
+    Represented as a Discrete Space with the value chosen corresponding to an index within
+    the observation. This indicates where the line is to be drawn.
+    
+    Action_Mask:
+    Identical to the observation
+
+    Rewards:
+    Each agent receives a reward of 1 for completing a square. For every square the 
+    player agent ('player_0') completes, every adversary agent ('player_1', 'player_2', ...) 
+    will receive a reward of -1. For every square an adversary agent completes, the player agent
+    will receive a reward of -1. In this sense, the game implements both competitive and co-operative
+    elements as adversaries can work together to maximise their collective reward by reducing
+    the number of squares completed by the player agent, or adversaries can show elements of
+    greediness by trying to maximise their personal reward and complete more squares.
+    """
+
     metadata = {
         "name": "dots_and_boxes_v0",
         "render_modes": ["human"]
@@ -28,17 +84,14 @@ class DotsAndBoxesEnvironment(AECEnv):
         self.board_length = board_length
         self.board_size = 2 * (self.board_length - 1) * self.board_length
 
-        #The dots and boxes is represented through a square board with two layers. One represents
-        #the horizontal lines and the other represents the vertical lines. The board is an array
-        #initialised as ones indicating that a line can be placed there. Once a line is placed
-        #it is converted into a 0. It is also represented as a flat array. It is done this way 
-        #to make action masking and indexing into the board more efficient.
+        
         self.board = np.ones((self.board_size,), dtype=np.int8)
 
 
 
     def reset(self, seed = None, options = None):
         self.board = np.ones((self.board_size,), dtype=np.int8)
+        self.filled_squares = np.full(((self.board_length - 1), (self.board_length - 1)), 4, dtype=np.int8)
 
         self.agents = self.possible_agents[:]
         self.rewards = {agent: 0 for agent in self.agents}
@@ -69,25 +122,25 @@ class DotsAndBoxesEnvironment(AECEnv):
         if action < midpoint:
             row = int(action/self.board_length)
             col = action % self.board_length
-            if ((col != 0) and (self.board[action - 1] == 0) and
-                (self.board[midpoint + (row * (self.board_length - 1)) + (col - 1)] == 0) and
-                (self.board[midpoint + ((row + 1) * (self.board_length - 1)) + (col - 1)] == 0)):
-                reward_agent += 1
-            if ((col != (self.board_length - 1)) and (self.board[action + 1] == 0) and
-                (self.board[midpoint + (row * (self.board_length - 1)) + (col)] == 0) and
-                (self.board[midpoint + ((row + 1) * (self.board_length - 1)) + (col)] == 0)):
-                reward_agent += 1
+            if (col != 0):
+                self.filled_squares[row][col - 1] -= 1
+                if self.filled_squares[row][col - 1] == 0:
+                    reward_agent += 1
+            if (col != (self.board_length - 1)):
+                self.filled_squares[row][col] -= 1
+                if self.filled_squares[row][col] == 0:
+                    reward_agent += 1
         else:
             row = int((action - midpoint)/(self.board_length - 1))
             col = (action - midpoint)%(self.board_length - 1)
-            if ((row != 0) and (self.board[action - (self.board_length - 1)] == 0) and
-                (self.board[((row - 1) * self.board_length) + (col)] == 0) and
-                (self.board[((row - 1) * self.board_length) + (col + 1)] == 0)):
-                reward_agent += 1
-            if ((row != self.board_length - 1) and (self.board[action + (self.board_length - 1)] == 0) and
-                (self.board[((row) * self.board_length) + (col)] == 0) and
-                (self.board[((row) * self.board_length) + (col + 1)] == 0)):
-                reward_agent += 1
+            if (row != 0):
+                self.filled_squares[row - 1][col] -= 1
+                if self.filled_squares[row - 1][col] == 0:
+                    reward_agent += 1
+            if (row != self.board_length - 1):
+                self.filled_squares[row][col] -= 1
+                if self.filled_squares[row][col] == 0:
+                    reward_agent += 1
 
         if reward_agent == 0:
             self.agent_selection = self._agent_selector.next()
