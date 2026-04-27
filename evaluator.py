@@ -44,10 +44,10 @@ class Evaluator:
 
         plots = [
             {"title": "Moving Average of Time taken for Get Action Method", "logger_param": "get_action",
-             "xlabel": "Number of get action calls", "ylabel": "Average Time Taken(nanoseconds)",
+             "xlabel": "Number of get action calls", "ylabel": "Average Time Taken (seconds)",
              "filename": "get-action-time"},
             {"title": "Moving Average of Time Taken for Update Method", "logger_param": "update",
-             "xlabel": "Number of updates", "ylabel": "Average Time Taken (nanoseconds)",
+             "xlabel": "Number of updates", "ylabel": "Average Time Taken (seconds)",
              "filename": "update-time"},
             {"title": "Moving Average of Cumulative Rewards", "logger_param": "record",
              "xlabel": "Number of episodes", "ylabel": "Average Cumulative Reward",
@@ -82,7 +82,9 @@ class Evaluator:
             {"title": "Moving Average of Number of Iterations", "logger_param": "num_iterations",
              "xlabel": "Episode Number", "ylabel": "Average Number of Iterations", "filename": "iterations"},
             {"title": "Moving Average of Time Taken per Episode", "logger_param": "run",
-             "xlabel": "Episode Number", "ylabel": "Average Time Taken (nanoseconds)", "filename": "time-per-episode"}
+             "xlabel": "Episode Number", "ylabel": "Average Time Taken (seconds)", "filename": "time-per-episode"},
+            {"title": "Moving Average of Memory Usage per Episode", "logger_param": "mem_run",
+             "xlabel": "Episode Number", "ylabel": "Average Memory Usage (MB)", "filename": "mem-per-episode"},
         ]
         for plot in plots:
             plt.title(plot["title"])

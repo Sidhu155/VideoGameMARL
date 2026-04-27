@@ -1,7 +1,7 @@
 from logger import Logger
 from agents.agent import Agent
 from tqdm import tqdm
-from utils import time_func
+from utils import time_func, log_memory_func
 
 class Environment:
     """
@@ -21,6 +21,7 @@ class Environment:
         self.logger = Logger()
         self.create_env()
 
+    @log_memory_func("mem_run")
     @time_func("run")
     def run(self, agent_list: tuple[Agent]):
         """

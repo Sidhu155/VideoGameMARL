@@ -23,7 +23,7 @@ def time_func(log_name: str):
     
     def timed_func(func):
         def decorator(obj, *args, **kwargs):
-            if obj.logger.logging and obj.logger.hasKeyInLogs(log_name):
+            if obj.logger.logging and obj.logger.keyAllowed(log_name):
                 start = time.perf_counter()
                 return_val = func(obj, *args, **kwargs)
                 end = time.perf_counter()
@@ -38,7 +38,7 @@ def log_memory_func(log_name: str):
 
     def memory_logger_func(func):
         def decorator(obj, *args, **kwargs):
-            if obj.logger.logging and obj.logger.hasKeyInLogs(log_name):
+            if obj.logger.logging and obj.logger.keyAllowed(log_name):
                 process = psutil.Process(os.getpid())
                 
                 before = process.memory_info().rss

@@ -1,20 +1,31 @@
-from collections import defaultdict
-
 class Logger:
 
     def __init__(self):
-        self.dict_lists = defaultdict(list)
+        self.allowed_keys = [
+            'get_action', 'update', 'record', 'training_error',
+            'num_iterations', 'run', 'mem_run'
+        ]
+        self.dict_lists = {}
         self.logging = True
 
     def updateLogs(self, key: str, val: int | float) -> None:
-        if self.logging:
-            self.dict_lists[key].append(val)
+        if self.logging and key in self.allowed_keys:
+            if self.hasKeyInLogs(key):
+                self.dict_lists[key].append(val)
+            else:
+                self.dict_lists[key] = [val]
 
     def getLogs(self, key: str) -> list:
-        return self.dict_lists[key]
+        if self.hasKeyInLogs(key):
+            return self.dict_lists[key]
+        else:
+            return []
     
     def hasKeyInLogs(self, key: str) -> bool:
         return key in self.dict_lists
+    
+    def keyAllowed(self, key:str) -> bool:
+        return key in self.allowed_keys
     
     def enableLogging(self) -> None:
         self.logging = True
@@ -23,7 +34,7 @@ class Logger:
         self.logging = False
 
     def resetLogger(self) -> None:
-        self.dict_lists = defaultdict(list)
+        self.dict_lists = {}
 
     
 
