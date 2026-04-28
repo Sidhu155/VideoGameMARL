@@ -2,15 +2,18 @@ import os
 import dill as pickle
 from pathlib import Path
 
+"""These paths can be altered and will change where objects and results are saved"""
 path_objects = "saved_objects"
 path_results = "results"
 
+"""These shorts map to subdirectories within path_objects."""
 short_to_full = {
     'p': 'players',
     'a': 'adversaries',
     'e': 'environments'
 }
 
+"""Create paths if they do not exist"""
 Path('/'.join((path_objects, "players"))).mkdir(parents=True, exist_ok=True)
 Path('/'.join((path_objects, "adversaries"))).mkdir(parents=True, exist_ok=True)
 Path('/'.join((path_objects, "environments"))).mkdir(parents=True, exist_ok=True)

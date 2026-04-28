@@ -1,47 +1,63 @@
 import sys
-import matplotlib.pyplot as plt
-import numpy as np
 import csv
+import numpy as np
+import matplotlib.pyplot as plt
 from argparse import ArgumentParser
-from file import loadFromFile, make_results_path
+from logger import Logger
 from agents.agent import Agent
 from environments.environment import Environment
+from file import loadFromFile, make_results_path
 
 class Evaluator:
-    def __init__(self, path: str, window: int) -> None:
+    """
+    The Evaluator Class takes environment, player or adversary objects and compares
+    data about them provided by their loggers. It plots this information under the 
+    results directory (stated in the logger file) and also provides a csv file of important
+    features of the data.
+    """
+
+    def __init__(self, path: str, window_ratio: float) -> None:
         """
         Args:
             path: The path that the evaluator saves the results in
-            window: The rolling window used when plotting moving averages
+            window_ratio: The ratio of the rolling window to the length of the data
         """
 
         self.path = path
-        self.window = window
+        self.window_ratio = window_ratio
         self.writer = csv.writer(open(self.path + '/data.csv', 'w', newline=''))
         self.writer.writerow(self.getCSVHeaders())
 
     def plotMovingAverage(self, values: np.ndarray, label: str) -> None:
         """
         Args:
-            values: A
+            values: An array of data points
             label: The label for the line being drawn. This is included in the legend of the plot
         
         Plot a moving average onto the graph based on the values provided.
         """
 
-        values_moving_average = np.convolve(values, np.ones(self.window), mode="valid")/self.window
+        rolling_window = int(self.window_ratio * values.size) + 1
+
+        #Use convolve to create a moving average. Convolve essentially pushes the data points
+        #backwards through an array of ones (size of the rolling window). It multiplies all 
+        #data points in values that have a corresponding one in the window by that one, adds them
+        #together and divides by the window length
+        values_moving_average = np.convolve(values, np.ones(rolling_window), mode="valid")/rolling_window
         plt.plot(values_moving_average, label=label)
 
-    def plotAgents(self, agents: list[Agent], names: list[str]) -> None:
+    def plotAgents(self, agent_loggers: list[Logger], names: list[str]) -> None:
         """
         Args:
-            agents: A list of agents
+            agent_loggers: A list of agent loggers
             names: A list of names for the agents
         
         Plots graphs based on information from the loggers of the agents. Saves these graphs to
-        the directory provided to the evaluator object
+        the directory provided to the evaluator object. Also saves information such as median and mean
+        of said logs to a csv file in the directory.
         """
 
+        #This defines the plots that will be made using the loggers of the agents
         plots = [
             {"title": "Moving Average of Time taken for Get Action Method", "logger_param": "get_action",
              "xlabel": "Number of get action calls", "ylabel": "Average Time Taken (seconds)",
@@ -61,21 +77,24 @@ class Evaluator:
             plt.title(plot["title"])
             plt.xlabel(plot["xlabel"])
             plt.ylabel(plot["ylabel"])
-            for agent, name in zip(agents, names):
-                if agent.logger.hasKeyInLogs(plot["logger_param"]):
-                    log = np.array(agent.logger.getLogs(plot["logger_param"]), dtype=np.float32)
+            for logger, name in zip(agent_loggers, names):
+                if logger.hasKeyInLogs(plot["logger_param"]):
+                    #Convert logs into array with float type. Float prevents issues with infinities
+                    #when calculating mean
+                    log = np.array(logger.getLogs(plot["logger_param"]), dtype=np.float32)
                     self.plotMovingAverage(log, name)
                     self.writeLogToCSV(name, plot["logger_param"], log)
             self.saveResult(plot["filename"])
 
-    def plotEnvironments(self, environments: list[Environment], names: list[str]) -> None:
+    def plotEnvironments(self, env_loggers: list[Logger], names: list[str]) -> None:
         """
         Args:
-            environments: A list of environments
+            env_loggers: A list of environment loggers
             names: A list of names for the environments
         
         Plots graphs based on information from the loggers of the environments. Saves these graphs to
-        the directory provided to the evaluator object
+        the directory provided to the evaluator object. Also saves information such as median and mean
+        of said logs to a csv file in the directory.
         """
 
         plots = [
@@ -90,9 +109,11 @@ class Evaluator:
             plt.title(plot["title"])
             plt.xlabel(plot["xlabel"])
             plt.ylabel(plot["ylabel"])
-            for env, name in zip(environments, names):
-                if env.logger.hasKeyInLogs(plot["logger_param"]):
-                    log = np.array(env.logger.getLogs(plot["logger_param"]))
+            for logger, name in zip(env_loggers, names):
+                if logger.hasKeyInLogs(plot["logger_param"]):
+                    #Convert logs into array with float type. Float prevents issues with infinities
+                    #when calculating mean
+                    log = np.array(logger.getLogs(plot["logger_param"]), dtype=np.float32)
                     self.plotMovingAverage(log, name)
                     self.writeLogToCSV(name, plot["logger_param"], log)
             self.saveResult(plot["filename"])
@@ -109,7 +130,18 @@ class Evaluator:
         plt.savefig(self.path + f"/{filename}", dpi=300, bbox_inches='tight')
         plt.close()
 
-    def writeLogToCSV(self, name: str, param: str, log: np.ndarray):
+    def writeLogToCSV(self, name: str, param: str, log: np.ndarray) -> None:
+        """
+        Args:
+            name: The name of the object from which the log is given
+            param: A string that describes the nature of the logs
+            log: An array of data points
+        
+        Takes a list of data points, with their corresponding parameter and the name of
+        the object, and converts them into min, median, mean, max and std, writing these into a
+        csv file using the objects csv writer.
+        """
+
         num_data_points = len(log)
         min = np.min(log)
         median = np.median(log)
@@ -119,49 +151,72 @@ class Evaluator:
         self.writer.writerow([name, param, num_data_points, min, median, mean, max, std])
 
     def getCSVHeaders(self) -> list[str]:
+        """
+        Return:
+            A List of csv table headers that are used when creating the csv file
+        """
         return [
             'Name', 'Parameter', 'Num Data Points', 
             'Min', 'Median', 'Mean', 'Max', 'Standard Deviation'
         ]
 
+def get_parsed_args(args) -> tuple:
+    """
+    Args:
+        args: Arguments passed when calling the evaluator file from the command line
+        
+    Returns:
+        Tuple of type, objects, names, destination and window-ratio
+        
+    Creates a parser with which to parse given arguments. Ensures window ratio, objects, name 
+    arguments are also usable by the main method.
+    """
 
-def main(args: list[str] | None = None):
     parser = ArgumentParser()
     parser.add_argument("type", choices=["environment", "player", "adversary"])
     parser.add_argument("-o", "--objects", nargs='+', type=str)
     parser.add_argument("-n", "--names", nargs='*', type=str, default=[])
     parser.add_argument("-d", "--destination", default="res", type=str)
-    parser.add_argument("-w", "--window-size", default="1000", type=int)
+    parser.add_argument("-w", "--window-ratio", default="0.05", type=float)
     parsed_args = parser.parse_args(args)
     
-    if parsed_args.window_size <= 0:
-        raise Exception("Window size must be greater than 0")
+    if parsed_args.window_ratio <= 0:
+        raise Exception("Window ratio must be greater than 0")
     
-    eval = Evaluator(make_results_path(parsed_args.destination), 1000)
-
     if len(parsed_args.objects) < len(parsed_args.names):
         parsed_args.names = parsed_args.names[:len(parsed_args.objects)]
     elif len(parsed_args.objects) > len(parsed_args.names):
         parsed_args.names.extend(parsed_args.objects[len(parsed_args.names):])
-    
-    if parsed_args.type == "environment":
-        envs = []
-        for path in parsed_args.objects:
+
+    return (parsed_args.type, parsed_args.objects, parsed_args.names, 
+            parsed_args.destination, parsed_args.window_ratio)
+
+def main(args: list[str] | None = None):
+    type, objects, names, destination, window_ratio = get_parsed_args(args)
+    eval = Evaluator(make_results_path(destination), window_ratio)
+
+    #Check what type of object is being evaluated
+    if type == "environment":
+        env_loggers = []
+        #Load all environments and ensure they are instances of Environments. Then plot
+        for path in objects:
             env = loadFromFile(path, 'e')
             assert isinstance(env, Environment)
-            envs.append(env)
-        eval.plotEnvironments(envs, parsed_args.names)
+            env_loggers.append(env.logger)
+        eval.plotEnvironments(env_loggers, names)
     else:
-        if parsed_args.type == 'player': short = 'p'
+        #The short determines which directory to search under. Player agents are located
+        #in the players directory whereas adversaries are located in the adversaries directory.
+        if type == 'player': short = 'p'
         else: short = 'a'
 
-        agents = []
-        for path in parsed_args.objects:
+        #Ensure all agents loaded are indeed agents. Then plot agents
+        agent_loggers = []
+        for path in objects:
             agent = loadFromFile(path, short)
             assert isinstance(agent, Agent)
-            agents.append(agent)
-        eval.plotAgents(agents, parsed_args.names)
-        
+            agent_loggers.append(agent.logger)
+        eval.plotAgents(agent_loggers, names)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
