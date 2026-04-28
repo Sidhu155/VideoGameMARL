@@ -12,7 +12,7 @@ class Evaluator:
     """
     The Evaluator Class takes environment, player or adversary objects and compares
     data about them provided by their loggers. It plots this information under the 
-    results directory (stated in the logger file) and also provides a csv file of important
+    results directory (stated in file.py) and also provides a csv file of important
     features of the data.
     """
 

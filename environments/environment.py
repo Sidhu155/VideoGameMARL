@@ -32,6 +32,7 @@ class Environment:
         At each step, gets actions from the agent by providing current observation.
         Updates agent with current reward and obs.
         """
+        
         num_iterations = 0
         rewards = list(0 for _ in range(len(agent_list)))
         for agent in self.env.agent_iter():
@@ -68,6 +69,9 @@ class Environment:
         Runs a given number of episodes within the environment.
         """
 
+        if len(agent_list) != len(self.agent_names):
+            raise Exception("Incorrect number of agents provided")
+        
         for _ in tqdm(range(numGames)):
             self.run(agent_list)
 

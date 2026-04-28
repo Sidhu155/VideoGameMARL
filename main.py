@@ -1,6 +1,7 @@
 import sys
-from argparse import ArgumentParser
-from file import writeToFile, loadFromFile
+from argparse import ArgumentParser, Namespace
+from gymnasium import Space
+from file import writeToFile, loadFromFile, get_file_path
 from environments.environment import Environment
 from environments import connectfour, tictactoe, dotsAndBoxes
 from agents.agent import Agent
@@ -9,7 +10,14 @@ from agents.funcQAgents import QFuncApproxAgent, SARSAFuncApproxAgent
 from agents.randomAgent import RandomAgent
 from agents.playerAgent import PlayerAgent
 
-def parse(args: list[str] | None = None):
+def parse(args: list[str] | None = None) -> Namespace:
+    """
+    Args:
+        args: A list of arguments passed to the command line when calling main
+    
+    Returns the command line arguments parsed by an Argument Parser
+    """
+
     parser = ArgumentParser()
     parser.add_argument("environment", type=str)
     parser.add_argument("-p", "--player", dest="playerAgent", default="randAgent")
@@ -18,108 +26,122 @@ def parse(args: list[str] | None = None):
     parser.add_argument("-w", "--numwatch", dest="numWatch", type=int, default=0)
     parser.add_argument("-x", "--numplay", dest="numPlay", type=int, default=0)
     parser.add_argument("-o:p", "--outfile-player")
-    parser.add_argument("-o:a", "--outfile-adversary", nargs='*')
+    parser.add_argument("-o:a", "--outfile-adversary", nargs='*', default=[])
     parser.add_argument("-o:e", "--outfile-env")
-    parser.add_argument("-t:w", "--train-watch", action="store_true")
-    parser.add_argument("-t:p", "--train-play", action="store_true")
+    parser.add_argument("-l", "--learn-watch-play", action="store_true")
     parser.add_argument("-d:p", "--disable-player-learn", action="store_true")
     parser.add_argument("-d:a", "--disable-adversary-learn", action="store_true")
     return parser.parse_args(args)
 
-def match_args(args):
-    match args.environment:
+def match_env(arg: str, num_agents: int, bool_save: bool):
+    match arg:
         case "connectfour":
             environment = connectfour.ConnectFour()
         case "tictactoe":
             environment = tictactoe.TicTacToe()
         case "dotsandboxes":
-            environment = dotsAndBoxes.DotsAndBoxes(num_agents=len(args.adversaryAgent) + 1, board_length=5)
+            environment = dotsAndBoxes.DotsAndBoxes(
+                num_agents=num_agents,
+                board_length=5
+            )
         case _:
+            #Attempt to load the environment from the directory specified in file.py
             try:
-                environment: Environment = loadFromFile(args.environment, 'e')
+                environment: Environment = loadFromFile(arg, 'e')
                 assert isinstance(environment, Environment)
-            except Exception as excp:
-                print(type(excp))
-                print(excp)
-                raise Exception("Please input a valid environment or filepath")
+            except Exception:
+                raise Exception("Please input a valid environment or filename. Ensure that " \
+                f"saved environments are located in the {get_file_path('', 'e')} directory")
             else:
-                environment.create_env()
-    action_space = environment.get_action_spaces()
-    observation_space = environment.get_observation_spaces()
+                environment.tear_down()
+                environment.logger.enableLogging()      #Enable logging in case the saved env has it disabled
+                environment.logger.resetLogger()
+                environment.create_env()                #Create env as it may be closed beforehand
 
-    loaded_player = False
-    match args.playerAgent:
+    #Logging is unnecessary if the environment will not be saved
+    if not bool_save:
+        environment.logger.disableLogging()
+
+    return environment
+
+def match_agent(arg: str, short: str, action_space: Space, observation_space: Space, bool_save: bool) -> Agent:
+    loaded = False
+    match arg:
         case "qTab":
-            player = QTabAgent()
+            agent = QTabAgent()
         case "sarsaTab":
-            player = SARSATabAgent()
+            agent = SARSATabAgent()
         case "qFunc":
-            player = QFuncApproxAgent()
+            agent = QFuncApproxAgent()
         case "sarsaFunc":
-            player = SARSAFuncApproxAgent()
+            agent = SARSAFuncApproxAgent()
         case "playerAgent":
-            player = PlayerAgent()
+            agent = PlayerAgent()
         case "randAgent":
-            player = RandomAgent()
+            agent = RandomAgent()
         case _:
             try:
-                player: Agent = loadFromFile(args.playerAgent, 'p')
-                assert isinstance(player, Agent)
-                if player.observation_space != observation_space[0]:
-                    raise ValueError("Loaded player agent's observation space does not match environment")
-                if player.action_space != action_space[0]:
-                    raise ValueError("Loaded player agent's action space does not match environment")
-                player.enableLearning()
+                agent: Agent = loadFromFile(arg, short)
+                assert isinstance(agent, Agent)
+                if agent.observation_space != observation_space:
+                    raise ValueError("Loaded agent's observation space does not match environment")
+                if agent.action_space != action_space:
+                    raise ValueError("Loaded agent's action space does not match environment")
             except Exception as excp:
-                print(type(excp))
-                print(excp)
-                raise Exception("Please input a valid player agent or filepath")
-            else:
-                loaded_player = True
-    
-    if not loaded_player:
-        player.set_up(action_space[0], observation_space[0])
-    if args.disable_player_learn:
-        player.disableLearning()
-
-    adversaries = []
-    index = 1
-    for adversary_type in args.adversaryAgent:
-        loaded_adversary = False
-        match adversary_type:
-            case "qTab":
-                adversary = QTabAgent()
-            case "sarsaTab":
-                adversary = SARSATabAgent()
-            case "qFunc":
-                adversary = QFuncApproxAgent()
-            case "sarsaFunc":
-                adversary = SARSAFuncApproxAgent()
-            case "randAgent":
-                adversary = RandomAgent()
-            case _:
-                try:
-                    adversary: Agent = loadFromFile(adversary_type, 'a')
-                    assert isinstance(adversary, Agent)
-                    if adversary.observation_space != observation_space[1]:
-                        raise ValueError("Loaded adversary agent's observation space does not match environment")
-                    if adversary.action_space != action_space[1]:
-                        raise ValueError("Loaded adversary agent's action space does not match environment")
-                    adversary.enableLearning()
-                except Exception as excp:
-                    print(type(excp))
-                    print(excp)
-                    raise Exception("Please input a valid adversary agent or filepath")
+                #If the error is incorrect action or observation space, raise it
+                #Otherwise it is incorrect filename or agent type being passed through the command line
+                if type(excp) == ValueError:
+                    raise excp
                 else:
-                    loaded_adversary = True
-        if not loaded_adversary:
-            adversary.set_up(action_space[index], observation_space[index])
-        if args.disable_adversary_learn:
-            adversary.disableLearning()
+                    raise Exception("Please input a valid agent or filename. Ensure that " \
+                    f"saved agents are located in the {get_file_path('', short)} directory")
+            else:
+                agent.enableLearning()          #Enable learning in case the saved object had it disabled
+                agent.logger.enableLogging()    #Same reason as above
+                agent.logger.resetLogger()
+                loaded = True
+    
+    #If agent was loaded, action_space and observation_space will already be set up
+    if not loaded:
+        agent.set_up(action_space, observation_space)
+    #Logging is unnecessary if agent will not be saved.
+    if not bool_save:
+        agent.logger.disableLogging()
 
+    return agent
+
+def match_args(args) -> tuple:
+    """
+    Args:
+        args: The parsed arguments from the command line
+        
+    Returns:
+        A tuple of objects including environment, players, adversaries, other flags and constants
+        
+    Takes parsed args and creates objects based on their information. Provides the objects needed
+    for the main class.
+    """
+
+    #Create Environment
+    environment = match_env(args.environment, len(args.adversaryAgent) + 1, bool(args.outfile_env))
+
+    action_spaces = environment.get_action_spaces()
+    observation_spaces = environment.get_observation_spaces()
+
+    #Create Player
+    player = match_agent(args.playerAgent, 'p', action_spaces[0], observation_spaces[0], bool(args.outfile_player))
+
+    #Create adversaries
+    adversaries = []
+    index = 1           #Represents index of action and observation spaces corresponding to adversary
+    for adversary_type in args.adversaryAgent:
+        #Bool save is true even if index is equal to length of adversaries as index starts at one
+        bool_save = (index > len(args.outfile_adversary))
+        adversary = match_agent(adversary_type, 'a', action_spaces[index], observation_spaces[index], bool_save)
         adversaries.append(adversary)
         index += 1
 
+    #Check non-negative train, watch and play
     if args.numTrain < 0:
         raise Exception("Number of games for training cannot be negative")
     
@@ -128,50 +150,58 @@ def match_args(args):
     
     if args.numPlay < 0:
         raise Exception("Number of games for play cannot be negative")
-
+    
     return (environment, player, tuple(adversaries), args.numTrain, args.numWatch, args.numPlay,
-            args.outfile_player, args.outfile_adversary, args.outfile_env, args.train_watch, args.train_play)
+            args.outfile_player, args.outfile_adversary, args.outfile_env, 
+            args.learn_watch_play, args.disable_player_learn, args.disable_adversary_learn)
 
 def main(args: list[str] | None =  None):
     (environment, player, adversaries, numTrain, numWatch, numPlay,
-    outfile_player, outfile_adversary, outfile_env, train_watch, train_play) = match_args(parse(args))
+    outfile_player, outfile_adversary, outfile_env, 
+    learn_watch_play, disable_player_learn, disable_adversary_learn) = match_args(parse(args))
 
+    #When match_args creates any agent, learning is enabled by default.
+    #Here if specified by the user, learning can be disabled for players and adversaries throughout main process.
+    if disable_player_learn:
+        player.disableLearning()
+    if disable_adversary_learn:
+        for adversary in adversaries:
+            adversary.disableLearning()
+
+    #Training period
     print("Training...")
     environment.runNumGames((player, *adversaries), numTrain)
 
-    if numWatch > 0 or numPlay > 0:
-        environment.enable_rendering()
-    
-    if not train_watch:
+    #If learning is specified as false during watch and play period, disable all learning
+    if not learn_watch_play:
         player.disableLearning()
         for adversary in adversaries:
             adversary.disableLearning()
-    else:
-        player.enableLearning()
-        for adversary in adversaries:
-            adversary.enableLearning()
+
+    environment.enable_rendering()
+
+    #Watching period
     print("Watching...")
     environment.runNumGames((player, *adversaries), numWatch)
 
+    #If outfile specified save player agent.
     if outfile_player: writeToFile(player, outfile_player, 'p') 
-    
+    #Swap to playerAgent and set up action space
     temp_action_space = player.action_space
     player = PlayerAgent()
     player.set_up(temp_action_space)
-    if not train_play:
-        for adversary in adversaries:
-            adversary.disableLearning()
-    else:
-        for adversary in adversaries:
-            adversary.enableLearning()
+    
+    #Playing period
     print("Playing...")
     environment.runNumGames((player, *adversaries), numPlay)
     
+    #Save adversaries if outfiles specified
     if outfile_adversary:
         for adversary, outfile in zip(adversaries, outfile_adversary):
             writeToFile(adversary, outfile, 'a') 
 
     environment.tear_down()
+    #Save environments if outfile specified
     if outfile_env: writeToFile(environment, outfile_env, 'e') 
 
 
