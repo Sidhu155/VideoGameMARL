@@ -136,7 +136,7 @@ def match_args(args) -> tuple:
     index = 1           #Represents index of action and observation spaces corresponding to adversary
     for adversary_type in args.adversaryAgent:
         #Bool save is true even if index is equal to length of adversaries as index starts at one
-        bool_save = (index > len(args.outfile_adversary))
+        bool_save = (index <= len(args.outfile_adversary))
         adversary = match_agent(adversary_type, 'a', action_spaces[index], observation_spaces[index], bool_save)
         adversaries.append(adversary)
         index += 1

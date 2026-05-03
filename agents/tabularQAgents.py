@@ -54,7 +54,7 @@ class Tabular(BaseQValAgent):
         Q-Values are initialised to 0.
         """
 
-        return np.array(list(0.0 for _ in range(self.numActions)), dtype=np.float16)
+        return np.zeros(self.numActions, dtype=np.float16)
     
 class QTabAgent(QLearnMixin, Tabular):
     pass
