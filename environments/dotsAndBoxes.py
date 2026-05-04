@@ -21,25 +21,34 @@ class DotsAndBoxes(Environment):
     
     def convert_abstract_action(self, agent_idx, obs, mask, abstracted_action):
         midpoint = self.board_length * (self.board_length - 1)
-        indices = np.argwhere(self.env.filled_squares == abstracted_action + 1)
-        if len(indices) > 0:
-            index = np.random.choice(indices.shape[0])
-            row = indices[index][0]
-            col = indices[index][1]
-            actions = []
-            if obs[(row * self.board_length) + col] == 1: actions.append((row * self.board_length) + col)
-            if obs[(row * self.board_length) + col + 1] == 1: actions.append((row * self.board_length) + (col + 1))
-            if obs[midpoint + (row * (self.board_length - 1)) + col] == 1: 
-                actions.append(midpoint + (row * (self.board_length - 1)) + col)
-            if obs[midpoint + ((row + 1) * (self.board_length - 1)) + col] == 1:
-                actions.append(midpoint + ((row + 1) * (self.board_length - 1)) + col)
+        if abstracted_action == 0:
+            priority = [4, 3, 1, 2]
+        elif abstracted_action == 1:
+            priority = [2, 1, 3, 4]
+        elif abstracted_action == 2:
+            priority = [3, 4, 2, 1]
+        
 
-            return random.choice(actions)
-        else:
-            return np.random.choice(np.argwhere(mask).flatten())
+        for prior in priority:
+            indices = np.argwhere(self.env.filled_squares == prior)
+            if len(indices) > 0:
+                break
+
+        index = np.random.choice(indices.shape[0])
+        row = indices[index][0]
+        col = indices[index][1]
+        actions = []
+        if obs[(row * self.board_length) + col] == 1: actions.append((row * self.board_length) + col)
+        if obs[(row * self.board_length) + col + 1] == 1: actions.append((row * self.board_length) + (col + 1))
+        if obs[midpoint + (row * (self.board_length - 1)) + col] == 1: 
+            actions.append(midpoint + (row * (self.board_length - 1)) + col)
+        if obs[midpoint + ((row + 1) * (self.board_length - 1)) + col] == 1:
+            actions.append(midpoint + ((row + 1) * (self.board_length - 1)) + col)
+
+        return random.choice(actions)
 
     def get_abstract_mask(self, agent_idx, mask):
-        return np.ones(4, dtype=np.int8)
+        return np.ones(3, dtype=np.int8)
     
     def get_observation_space(self, idx: int, abstract: bool) -> list:
         if abstract:
@@ -49,7 +58,7 @@ class DotsAndBoxes(Environment):
         
     def get_action_space(self, idx: int, abstract: bool) -> list:
         if abstract:
-            return Discrete(4)
+            return Discrete(3)
         else:
             return super().get_action_space(idx, abstract)
     
