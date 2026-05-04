@@ -83,6 +83,8 @@ class BaseQValAgent(Agent):
                         maxActions = [action]
                     elif max == q:
                         maxActions.append(action)
+            
+            self.next_max_q = max
             #Randomly choose from list of maxActions. This avoids always picking actions with lower index
             return random.choice(maxActions)
 

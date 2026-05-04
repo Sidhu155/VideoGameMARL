@@ -16,9 +16,14 @@ class QLearnMixin:
         
         super().get_next_q(obs, action)
         if obs is None:
-            return 0
+            ret_val = 0
         else:
-            return self.get_max_q_value(obs)
+            if self.next_max_q is not None:
+                ret_val = self.next_max_q
+            else:
+                ret_val = self.get_max_q_value(obs)
+        self.next_max_q = None
+        return ret_val
         
 class SARSAMixin:
 
@@ -36,6 +41,11 @@ class SARSAMixin:
 
         super().get_next_q(obs, action)
         if obs is None:
-            return 0
+            ret_val = 0
         else:
-            return self.get_q_value(obs, action)
+            if self.next_max_q is not None:
+                ret_val = self.next_max_q
+            else:
+                ret_val = self.get_q_value(obs, action)
+        self.next_max_q = None
+        return ret_val
