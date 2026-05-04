@@ -16,7 +16,10 @@ class DotsAndBoxes(Environment):
 
     def get_obs_abstraction(self, obs):
         if self.obs_abstraction:
-            return np.copy(self.env.filled_squares)
+            ret_obs = np.zeros(5, dtype=np.int8)
+            for x in np.nditer(self.env.filled_squares):
+                ret_obs[x] += 1
+            return ret_obs
         else:
             return super().get_obs_abstraction(obs)
     
@@ -51,7 +54,7 @@ class DotsAndBoxes(Environment):
     
     def get_observation_spaces(self) -> list:
         if self.obs_abstraction:
-            return list(Box(0, 4, ((self.board_length - 1) ** 2,))
+            return list(Box(0, ((self.board_length - 1) ** 2), (5,))
                     for _ in self.agent_names)
         else:
             return super().get_observation_spaces()
