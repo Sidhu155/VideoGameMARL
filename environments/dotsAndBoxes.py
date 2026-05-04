@@ -8,7 +8,7 @@ from pettingzoo.utils import AgentSelector
 class DotsAndBoxes(Environment):
 
     def __init__(self, num_agents: int = 2, board_length: int = 5, 
-                 obs_abstraction: bool = False, action_abstraction: bool = True):
+                 obs_abstraction: bool = True, action_abstraction: bool = True):
         self.num_agents = num_agents
         self.board_length = board_length
         super().__init__(obs_abstraction, action_abstraction)
