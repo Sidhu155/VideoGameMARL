@@ -2,6 +2,7 @@ from logger import Logger
 from agents.agent import Agent
 from tqdm import tqdm
 from utils import time_func, log_memory_func
+import numpy as np
 
 class Environment:
     """
@@ -9,11 +10,13 @@ class Environment:
     Used as a wrapper for pettingzoo and custom environments
     """
 
-    def __init__(self):
+    def __init__(self, obs_abstraction: bool = True, action_abstraction: bool = True):
         """
         Initialise environment
         """
 
+        self.obs_abstraction = obs_abstraction
+        self.action_abstraction = action_abstraction
         self.agent_names = [
             "player_0",
             "player_1"
@@ -47,13 +50,18 @@ class Environment:
                 obs = None
                 action = None
                 currAgent.final(rewards[agent_idx])
+                currAgent.update(reward, obs, action)
             else:
+                abstracted_obs = self.get_obs_abstraction(obs)
                 mask = observation["action_mask"]
-                action = currAgent.get_action(obs, mask)
+                abstracted_mask = self.get_mask_abstraction(agent, mask)
+                
+                abstracted_action = currAgent.get_action(abstracted_obs, abstracted_mask)
+                currAgent.update(reward, abstracted_obs, abstracted_action)
 
-            currAgent.update(reward, obs, action)
+                action = self.convert_abstracted_action(agent, obs, mask, abstracted_action)
+
             self.env.step(action)
-
             num_iterations += 1
 
         self.logger.updateLogs("num_iterations", num_iterations)
@@ -74,6 +82,15 @@ class Environment:
         
         for _ in tqdm(range(numGames)):
             self.run(agent_list)
+
+    def get_obs_abstraction(self, obs: np.ndarray) -> np.ndarray:
+        return obs
+
+    def convert_abstracted_action(self, agent_name, obs, mask, abstracted_action):
+        return abstracted_action
+    
+    def get_mask_abstraction(self, agent_name, mask):
+        return mask
 
     def get_action_spaces(self) -> list:
         """
