@@ -19,12 +19,15 @@ class Tabular(BaseQValAgent):
         epsilon_decay: float = 2e-6,
         final_learning_rate: float = 2e-2,
         final_epsilon: float = 2e-2,
-        discount_factor: float = 0.95
+        discount_factor: float = 0.95,
+        obs_abstraction: bool = False,
+        action_abstraction: bool = False
     ):
 
         super().__init__(
             learning_rate, epsilon, learning_decay, epsilon_decay,
-            final_learning_rate, final_epsilon, discount_factor
+            final_learning_rate, final_epsilon, discount_factor, 
+            obs_abstraction, action_abstraction
         )
     
     def set_up(self,

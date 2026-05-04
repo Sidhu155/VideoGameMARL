@@ -17,7 +17,9 @@ class BaseQValAgent(Agent):
         epsilon_decay: float,
         final_learning_rate: float,
         final_epsilon: float,
-        discount_factor: float
+        discount_factor: float,
+        obs_abstraction: bool = False,
+        action_abstraction: bool = False
     ):
         """Initialize a Q-Value based agent.
 
@@ -31,7 +33,7 @@ class BaseQValAgent(Agent):
             discount_factor: How much to value future rewards
         """
 
-        super().__init__()
+        super().__init__(obs_abstraction, action_abstraction)
         self.lr = learning_rate
         self.epsilon = epsilon
         self.lr_decay = learning_decay
@@ -42,6 +44,7 @@ class BaseQValAgent(Agent):
 
         self.prevObs = None
         self.prevAction = None
+        self.next_max_q = None
 
     def set_up(self,
                action_space: Space,
@@ -84,6 +87,7 @@ class BaseQValAgent(Agent):
                     elif max == q:
                         maxActions.append(action)
             
+            #Set the maximum q_value for the observation to avoid recalculation in update and get_next_q
             self.next_max_q = max
             #Randomly choose from list of maxActions. This avoids always picking actions with lower index
             return random.choice(maxActions)

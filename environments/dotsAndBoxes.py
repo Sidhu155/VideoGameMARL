@@ -7,63 +7,51 @@ from pettingzoo.utils import AgentSelector
 
 class DotsAndBoxes(Environment):
 
-    def __init__(self, num_agents: int = 2, board_length: int = 5, 
-                 obs_abstraction: bool = True, action_abstraction: bool = True):
+    def __init__(self, num_agents: int = 2, board_length: int = 5):
         self.num_agents = num_agents
         self.board_length = board_length
-        super().__init__(obs_abstraction, action_abstraction)
+        super().__init__()
         self.agent_names = ["player_" + str(i) for i in range(num_agents)]
 
-    def get_obs_abstraction(self, obs):
-        if self.obs_abstraction:
-            ret_obs = np.zeros(5, dtype=np.int8)
-            for x in np.nditer(self.env.filled_squares):
-                ret_obs[x] += 1
-            return ret_obs
-        else:
-            return super().get_obs_abstraction(obs)
+    def get_obs_abstraction(self, agent_idx, obs):
+        ret_obs = np.zeros(5, dtype=np.int8)
+        for x in np.nditer(self.env.filled_squares):
+            ret_obs[x] += 1
+        return ret_obs
     
-    def convert_abstracted_action(self, agent_name, obs, mask, abstracted_action):
-        if self.action_abstraction:
-            midpoint = self.board_length * (self.board_length - 1)
-            indices = np.argwhere(self.env.filled_squares == abstracted_action + 1)
-            if len(indices) > 0:
-                index = np.random.choice(indices.shape[0])
-                row = indices[index][0]
-                col = indices[index][1]
-                actions = []
-                if obs[(row * self.board_length) + col] == 1: actions.append((row * self.board_length) + col)
-                if obs[(row * self.board_length) + col + 1] == 1: actions.append((row * self.board_length) + (col + 1))
-                if obs[midpoint + (row * (self.board_length - 1)) + col] == 1: 
-                    actions.append(midpoint + (row * (self.board_length - 1)) + col)
-                if obs[midpoint + ((row + 1) * (self.board_length - 1)) + col] == 1:
-                    actions.append(midpoint + ((row + 1) * (self.board_length - 1)) + col)
+    def convert_abstracted_action(self, agent_idx, obs, mask, abstracted_action):
+        midpoint = self.board_length * (self.board_length - 1)
+        indices = np.argwhere(self.env.filled_squares == abstracted_action + 1)
+        if len(indices) > 0:
+            index = np.random.choice(indices.shape[0])
+            row = indices[index][0]
+            col = indices[index][1]
+            actions = []
+            if obs[(row * self.board_length) + col] == 1: actions.append((row * self.board_length) + col)
+            if obs[(row * self.board_length) + col + 1] == 1: actions.append((row * self.board_length) + (col + 1))
+            if obs[midpoint + (row * (self.board_length - 1)) + col] == 1: 
+                actions.append(midpoint + (row * (self.board_length - 1)) + col)
+            if obs[midpoint + ((row + 1) * (self.board_length - 1)) + col] == 1:
+                actions.append(midpoint + ((row + 1) * (self.board_length - 1)) + col)
 
-                return random.choice(actions)
-            else:
-                return np.random.choice(np.argwhere(mask).flatten())
-
+            return random.choice(actions)
         else:
-            return super().convert_abstracted_action(agent_name, obs, mask, abstracted_action)
+            return np.random.choice(np.argwhere(mask).flatten())
 
-    def get_mask_abstraction(self, agent_name, mask):
-        if self.action_abstraction:
-            return np.ones(4, dtype=np.int8)
-        else:
-            return super().get_mask_abstraction(agent_name, mask)
+    def get_mask_abstraction(self, agent_idx, mask):
+        return np.ones(4, dtype=np.int8)
     
-    def get_observation_spaces(self) -> list:
-        if self.obs_abstraction:
-            return list(Box(0, ((self.board_length - 1) ** 2), (5,))
-                    for _ in self.agent_names)
+    def get_observation_space(self, idx: int, abstract: bool) -> list:
+        if abstract:
+            return Box(0, ((self.board_length - 1) ** 2), (5,))
         else:
-            return super().get_observation_spaces()
+            return super().get_observation_space(idx, abstract)
         
-    def get_action_spaces(self) -> list:
-        if self.action_abstraction:
-            return list(Discrete(4) for _ in self.agent_names)
+    def get_action_space(self, idx: int, abstract: bool) -> list:
+        if abstract:
+            return Discrete(4)
         else:
-            return super().get_action_spaces()
+            return super().get_action_space(idx, abstract)
     
     def create_env(self, render_type: str | None = None):
         self.env = DotsAndBoxesEnvironment(render_type, self.num_agents, self.board_length)

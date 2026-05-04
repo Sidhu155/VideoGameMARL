@@ -10,13 +10,11 @@ class Environment:
     Used as a wrapper for pettingzoo and custom environments
     """
 
-    def __init__(self, obs_abstraction: bool = True, action_abstraction: bool = True):
+    def __init__(self):
         """
         Initialise environment
         """
 
-        self.obs_abstraction = obs_abstraction
-        self.action_abstraction = action_abstraction
         self.agent_names = [
             "player_0",
             "player_1"
@@ -52,14 +50,20 @@ class Environment:
                 currAgent.final(rewards[agent_idx])
                 currAgent.update(reward, obs, action)
             else:
-                abstracted_obs = self.get_obs_abstraction(obs)
-                mask = observation["action_mask"]
-                abstracted_mask = self.get_mask_abstraction(agent, mask)
-                
-                abstracted_action = currAgent.get_action(abstracted_obs, abstracted_mask)
-                currAgent.update(reward, abstracted_obs, abstracted_action)
+                if currAgent.obs_abstraction:
+                    agent_obs = self.get_obs_abstraction(agent_idx, obs)
+                else:
+                    agent_obs = obs
 
-                action = self.convert_abstracted_action(agent, obs, mask, abstracted_action)
+                mask = observation["action_mask"]
+                if currAgent.action_abstraction:
+                    agent_mask = self.get_mask_abstraction(agent_idx, mask)
+                    agent_action = currAgent.get_action(agent_obs, agent_mask)
+                    currAgent.update(reward, agent_obs, agent_action)
+                    action = self.convert_abstracted_action(agent_idx, obs, mask, agent_action)
+                else:
+                    action = currAgent.get_action(agent_obs, mask)
+                    currAgent.update(reward, agent_obs, action)
 
             self.env.step(action)
             num_iterations += 1
@@ -83,32 +87,36 @@ class Environment:
         for _ in tqdm(range(numGames)):
             self.run(agent_list)
 
-    def get_obs_abstraction(self, obs: np.ndarray) -> np.ndarray:
+    def get_obs_abstraction(self, agent_idx, obs: np.ndarray) -> np.ndarray:
         return obs
 
-    def convert_abstracted_action(self, agent_name, obs, mask, abstracted_action):
+    def convert_abstracted_action(self, agent_idx, obs, mask, abstracted_action):
         return abstracted_action
     
-    def get_mask_abstraction(self, agent_name, mask):
+    def get_mask_abstraction(self, agent_idx, mask):
         return mask
 
-    def get_action_spaces(self) -> list:
+    def get_action_space(self, idx: int, abstract: bool) -> list:
         """
+        Args:
+            idx: Representing agent index
+
         Returns:
-            List of Action Spaces for each player
+            Action space for agent
         """
 
-        return list(self.env.action_space(name)
-                    for name in self.agent_names)
+        return self.env.action_space(self.agent_names[idx])
 
-    def get_observation_spaces(self) -> list:
+    def get_observation_space(self, idx: int, abstract: bool) -> list:
         """
+        Args:
+            idx: Representing agent index
+
         Returns:
-            List of observation spaces for each player
+            Observation space for agent.
         """
 
-        return list(self.env.observation_space(name)["observation"]
-                    for name in self.agent_names)
+        return self.env.observation_space(self.agent_names[idx])["observation"]
     
     def enable_rendering(self):
         """

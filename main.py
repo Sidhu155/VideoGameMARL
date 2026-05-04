@@ -1,4 +1,5 @@
 import sys
+import warnings
 from argparse import ArgumentParser, Namespace
 from gymnasium import Space
 from file import writeToFile, loadFromFile, get_file_path
@@ -31,6 +32,8 @@ def parse(args: list[str] | None = None) -> Namespace:
     parser.add_argument("-l", "--learn-watch-play", action="store_true")
     parser.add_argument("-d:p", "--disable-player-learn", action="store_true")
     parser.add_argument("-d:a", "--disable-adversary-learn", action="store_true")
+    parser.add_argument("-abs:o", "--abstraction-observation", nargs='*', type=int, default=[])
+    parser.add_argument("-abs:a", "--abstraction-action", nargs='*', type=int, default=[])
     return parser.parse_args(args)
 
 def match_env(arg: str, num_agents: int, bool_save: bool):
@@ -64,28 +67,35 @@ def match_env(arg: str, num_agents: int, bool_save: bool):
 
     return environment
 
-def match_agent(arg: str, short: str, action_space: Space, observation_space: Space, bool_save: bool) -> Agent:
+def match_agent(arg: str, short: str, env: Environment, idx: int,
+                obs_abstract: bool, act_abstract: bool, bool_save: bool) -> Agent:
     loaded = False
+    kwargs = {"obs_abstraction":obs_abstract, "action_abstraction":act_abstract}
     match arg:
         case "qTab":
-            agent = QTabAgent()
+            agent = QTabAgent(**kwargs)
         case "sarsaTab":
-            agent = SARSATabAgent()
+            agent = SARSATabAgent(**kwargs)
         case "qFunc":
-            agent = QFuncApproxAgent()
+            agent = QFuncApproxAgent(**kwargs)
         case "sarsaFunc":
-            agent = SARSAFuncApproxAgent()
+            agent = SARSAFuncApproxAgent(**kwargs)
         case "playerAgent":
-            agent = PlayerAgent()
+            agent = PlayerAgent(**kwargs)
         case "randAgent":
-            agent = RandomAgent()
+            agent = RandomAgent(**kwargs)
         case _:
             try:
                 agent: Agent = loadFromFile(arg, short)
                 assert isinstance(agent, Agent)
-                if agent.observation_space != observation_space:
+                if agent.obs_abstraction != obs_abstract:
+                    warnings.warn(f"Loaded Agent {idx} obs_abstraction: {agent.obs_abstraction}")
+                if agent.action_abstraction != act_abstract:
+                    warnings.warn(f"Loaded Agent {idx} action_abstraction: {agent.action_abstraction}")
+                
+                if agent.observation_space != env.get_observation_space(idx, agent.obs_abstraction):
                     raise ValueError("Loaded agent's observation space does not match environment")
-                if agent.action_space != action_space:
+                if agent.action_space != env.get_action_space(idx, agent.action_abstraction):
                     raise ValueError("Loaded agent's action space does not match environment")
             except Exception as excp:
                 #If the error is incorrect action or observation space, raise it
@@ -103,7 +113,7 @@ def match_agent(arg: str, short: str, action_space: Space, observation_space: Sp
     
     #If agent was loaded, action_space and observation_space will already be set up
     if not loaded:
-        agent.set_up(action_space, observation_space)
+        agent.set_up(env.get_action_space(idx, act_abstract), env.get_observation_space(idx, obs_abstract))
     #Logging is unnecessary if agent will not be saved.
     if not bool_save:
         agent.logger.disableLogging()
@@ -125,11 +135,10 @@ def match_args(args) -> tuple:
     #Create Environment
     environment = match_env(args.environment, len(args.adversaryAgent) + 1, bool(args.outfile_env))
 
-    action_spaces = environment.get_action_spaces()
-    observation_spaces = environment.get_observation_spaces()
-
     #Create Player
-    player = match_agent(args.playerAgent, 'p', action_spaces[0], observation_spaces[0], bool(args.outfile_player))
+    player = match_agent(args.playerAgent, 'p', environment, 0,
+                         0 in args.abstraction_observation, 0 in args.abstraction_action,
+                         bool(args.outfile_player))
 
     #Create adversaries
     adversaries = []
@@ -137,7 +146,9 @@ def match_args(args) -> tuple:
     for adversary_type in args.adversaryAgent:
         #Bool save is true even if index is equal to length of adversaries as index starts at one
         bool_save = (index <= len(args.outfile_adversary))
-        adversary = match_agent(adversary_type, 'a', action_spaces[index], observation_spaces[index], bool_save)
+
+        adversary = match_agent(adversary_type, 'a', environment, index,
+                                index in args.abstraction_observation, index in args.abstraction_action, bool_save)
         adversaries.append(adversary)
         index += 1
 

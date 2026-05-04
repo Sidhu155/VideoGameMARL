@@ -8,11 +8,13 @@ class Agent:
     Base Agent class for interacting with an environment
     """
 
-    def __init__(self):
+    def __init__(self, obs_abstraction: bool = False, action_abstraction: bool = False):
         """
         Initialise Agent. Enable learning and create logger.
         """
 
+        self.obs_abstraction = obs_abstraction
+        self.action_abstraction = action_abstraction
         self.learning = True
         self.set_up_bool = False
         self.logger = Logger()
