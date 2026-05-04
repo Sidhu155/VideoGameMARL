@@ -95,6 +95,7 @@ class BaseQValAgent(Agent):
     @time_func("update")
     @assert_agent_set_up
     def update(self, reward: float, obs: np.ndarray, action: int) -> None:
+        super().update(reward, obs, action)
         if self.learning and (self.prevObs is not None):
             next_q = self.get_next_q(obs, action)   #If obs is none, next_q returns 0, else returns q_val for obs
             curr_q = self.get_q_value(self.prevObs, self.prevAction)

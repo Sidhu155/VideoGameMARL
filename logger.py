@@ -12,8 +12,8 @@ class Logger:
         """
 
         self.allowed_keys = [
-            'get_action', 'update', 'record', 'training_error',
-            'num_iterations', 'run', 'mem_run'
+            'get_action', 'update', 'record', 'training_error', 'history_actions',
+            'num_iterations', 'num_states', 'run', 'mem_run'
         ]
         self.dict_lists = {}
         self.logging = True

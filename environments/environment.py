@@ -21,6 +21,7 @@ class Environment:
         ]
         self.logger = Logger()
         self.create_env()
+        self.set_observations: set = set()
 
     @log_memory_func("mem_run")
     @time_func("run")
@@ -44,6 +45,8 @@ class Environment:
             rewards[agent_idx] += reward
 
             obs = observation["observation"]
+            self.set_observations.add(obs.tobytes())
+
             if termination or truncation:
                 obs = None
                 action = None
@@ -69,6 +72,7 @@ class Environment:
             num_iterations += 1
 
         self.logger.updateLogs("num_iterations", num_iterations)
+        self.logger.updateLogs("num_states", len(self.set_observations))
         self.env.reset()
 
     def runNumGames(self, agent_list: tuple[Agent], numGames: int):

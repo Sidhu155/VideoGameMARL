@@ -66,7 +66,8 @@ class Agent:
         the reward and the current observation.
         """
 
-        pass
+        if action is not None:
+            self.logger.updateLogs("history_actions", action)
 
     @assert_agent_set_up
     def final(self, reward: float) -> None:

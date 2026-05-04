@@ -86,6 +86,18 @@ class Evaluator:
                     self.writeLogToCSV(name, plot["logger_param"], log)
             self.saveResult(plot["filename"])
 
+        plt.title("Proportion of Actions Taken")
+        plt.xlabel("Action")
+        plt.ylabel("Fraction of Total Number of Actions Taken")
+        for logger, name in zip(agent_loggers, names):
+            if logger.hasKeyInLogs("history_actions"):
+                log = np.array(logger.getLogs("history_actions"))
+                values, counts = np.unique(log, return_counts=True)
+                fractions = counts/len(log)
+
+                plt.plot(values, fractions, label=name)
+        self.saveResult("action_proportions")
+
     def plotEnvironments(self, env_loggers: list[Logger], names: list[str]) -> None:
         """
         Args:
@@ -100,6 +112,8 @@ class Evaluator:
         plots = [
             {"title": "Moving Average of Number of Iterations", "logger_param": "num_iterations",
              "xlabel": "Episode Number", "ylabel": "Average Number of Iterations", "filename": "iterations"},
+            {"title": "Moving Average of Number of States", "logger_param": "num_states",
+             "xlabel": "Episode Number", "ylabel": "Average Number of Cumulative States", "filename": "states"},
             {"title": "Moving Average of Time Taken per Episode", "logger_param": "run",
              "xlabel": "Episode Number", "ylabel": "Average Time Taken (seconds)", "filename": "time-per-episode"},
             {"title": "Moving Average of Memory Usage per Episode", "logger_param": "mem_run",
@@ -117,6 +131,17 @@ class Evaluator:
                     self.plotMovingAverage(log, name)
                     self.writeLogToCSV(name, plot["logger_param"], log)
             self.saveResult(plot["filename"])
+
+        plt.title("Moving Average of Time per Iteration")
+        plt.xlabel("Episode Number")
+        plt.ylabel("Average Time per Iteration")
+        for logger, name in zip(env_loggers, names):
+            if logger.hasKeyInLogs("num_iterations") and logger.hasKeyInLogs("run"):
+                log = np.array(logger.getLogs("run"), dtype=np.float32)
+                log /= np.array(logger.getLogs("num_iterations"), dtype=np.float32)
+                self.plotMovingAverage(log, name)
+                self.writeLogToCSV(name, "time_per_iter", log)
+        self.saveResult("time-per-iteration")
     
     def saveResult(self, filename: str) -> None:
         """
