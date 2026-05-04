@@ -51,16 +51,16 @@ class Environment:
                 currAgent.update(reward, obs, action)
             else:
                 if currAgent.obs_abstraction:
-                    agent_obs = self.get_obs_abstraction(agent_idx, obs)
+                    agent_obs = self.get_abstract_obs(agent_idx, obs)
                 else:
                     agent_obs = obs
 
                 mask = observation["action_mask"]
                 if currAgent.action_abstraction:
-                    agent_mask = self.get_mask_abstraction(agent_idx, mask)
+                    agent_mask = self.get_abstract_mask(agent_idx, mask)
                     agent_action = currAgent.get_action(agent_obs, agent_mask)
                     currAgent.update(reward, agent_obs, agent_action)
-                    action = self.convert_abstracted_action(agent_idx, obs, mask, agent_action)
+                    action = self.convert_abstract_action(agent_idx, obs, mask, agent_action)
                 else:
                     action = currAgent.get_action(agent_obs, mask)
                     currAgent.update(reward, agent_obs, action)
@@ -87,13 +87,13 @@ class Environment:
         for _ in tqdm(range(numGames)):
             self.run(agent_list)
 
-    def get_obs_abstraction(self, agent_idx, obs: np.ndarray) -> np.ndarray:
+    def get_abstract_obs(self, agent_idx, obs: np.ndarray) -> np.ndarray:
         return obs
 
-    def convert_abstracted_action(self, agent_idx, obs, mask, abstracted_action):
+    def convert_abstract_action(self, agent_idx, obs, mask, abstracted_action):
         return abstracted_action
     
-    def get_mask_abstraction(self, agent_idx, mask):
+    def get_abstract_mask(self, agent_idx, mask):
         return mask
 
     def get_action_space(self, idx: int, abstract: bool) -> list:

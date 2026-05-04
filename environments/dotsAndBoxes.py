@@ -13,13 +13,13 @@ class DotsAndBoxes(Environment):
         super().__init__()
         self.agent_names = ["player_" + str(i) for i in range(num_agents)]
 
-    def get_obs_abstraction(self, agent_idx, obs):
+    def get_abstract_obs(self, agent_idx, obs):
         ret_obs = np.zeros(5, dtype=np.int8)
         for x in np.nditer(self.env.filled_squares):
             ret_obs[x] += 1
         return ret_obs
     
-    def convert_abstracted_action(self, agent_idx, obs, mask, abstracted_action):
+    def convert_abstract_action(self, agent_idx, obs, mask, abstracted_action):
         midpoint = self.board_length * (self.board_length - 1)
         indices = np.argwhere(self.env.filled_squares == abstracted_action + 1)
         if len(indices) > 0:
@@ -38,7 +38,7 @@ class DotsAndBoxes(Environment):
         else:
             return np.random.choice(np.argwhere(mask).flatten())
 
-    def get_mask_abstraction(self, agent_idx, mask):
+    def get_abstract_mask(self, agent_idx, mask):
         return np.ones(4, dtype=np.int8)
     
     def get_observation_space(self, idx: int, abstract: bool) -> list:
