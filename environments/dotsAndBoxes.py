@@ -37,14 +37,13 @@ class DotsAndBoxes(Environment):
         index = np.random.choice(indices.shape[0])
         row = indices[index][0]
         col = indices[index][1]
-        actions = []
-        if obs[(row * self.board_length) + col] == 1: actions.append((row * self.board_length) + col)
-        if obs[(row * self.board_length) + col + 1] == 1: actions.append((row * self.board_length) + (col + 1))
-        if obs[midpoint + (row * (self.board_length - 1)) + col] == 1: 
-            actions.append(midpoint + (row * (self.board_length - 1)) + col)
-        if obs[midpoint + ((row + 1) * (self.board_length - 1)) + col] == 1:
-            actions.append(midpoint + ((row + 1) * (self.board_length - 1)) + col)
+        idxes = [
+            (row * self.board_length) + col, (row * self.board_length) + col + 1,
+            midpoint + (row * (self.board_length - 1)) + col,
+            midpoint + ((row + 1) * (self.board_length - 1)) + col
+        ]
 
+        actions = list(idx for idx in idxes if obs[idx] == 1)
         return random.choice(actions)
 
     def get_abstract_mask(self, agent_idx, mask):

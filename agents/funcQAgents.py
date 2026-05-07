@@ -57,9 +57,9 @@ class FuncApprox(BaseQValAgent):
         
         obs_vector = np.ravel(obs)
         matrix = np.zeros((self.numActions, self.q_function.size))
+        matrix[:, -1] = 1.0
         for action in range(self.numActions):
             matrix[action][action * self.numFeatures:(action + 1) * self.numFeatures] += obs_vector
-            matrix[action][-1] += 1
 
         return np.max(matrix @ self.q_function)
 
