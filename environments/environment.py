@@ -151,3 +151,4 @@ class Environment:
         """
 
         self.env.close()
+        self.set_observations = set()

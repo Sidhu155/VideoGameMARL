@@ -1,7 +1,8 @@
 from gymnasium.spaces import Space
 import numpy as np
+import random
 from .baseQAgent import BaseQValAgent
-from utils import assert_agent_set_up
+from utils import assert_agent_set_up, time_func
 from .qMixins import QLearnMixin, SARSAMixin
 
 class FuncApprox(BaseQValAgent):
@@ -37,6 +38,43 @@ class FuncApprox(BaseQValAgent):
         super().set_up(action_space, observation_space, seed=seed)
         self.numFeatures = np.prod(observation_space.shape)
         self.q_function = self.getDefaultFunc()
+
+    @time_func("get_action")
+    @assert_agent_set_up
+    def get_action(self, obs: np.ndarray, mask: np.ndarray) -> int:
+        if (self.learning) and (np.random.random() < self.epsilon):
+            return self.action_space.sample(mask)
+        else:
+            #Create feature vector from observation
+            obs_vector = np.ravel(obs)
+            #Create array of legal actions
+            mask_arr = np.argwhere(mask).flatten()
+            
+            #Create matrix of feature vectors for legal actions
+            matrix = np.zeros((mask_arr.size, self.q_function.size))
+            matrix[:, -1] = 1.0
+            for idx in range(mask_arr.size):
+                action = mask_arr[idx]
+                left_idx = action * self.numFeatures
+                matrix[idx][left_idx:left_idx + self.numFeatures] += obs_vector
+
+            q_vals = matrix @ self.q_function
+
+            max = None
+            maxActions = []
+
+            #Iterate over legal actions. Check if q-value greater than or equal to max
+            for idx in range(mask_arr.size):
+                q_val = q_vals[idx]
+                action = mask_arr[idx]
+                if max is None or q_val > max:
+                    max = q_val
+                    maxActions = [action]
+                elif q_val == max:
+                    maxActions.append(action)
+            
+            self.next_max_q = max
+            return random.choice(maxActions)
 
     @assert_agent_set_up
     def get_q_value(self, obs: np.ndarray, action: int) -> float:
