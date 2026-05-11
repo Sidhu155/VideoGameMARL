@@ -17,4 +17,4 @@ class TicTacToe(Environment):
     
     def create_env(self, render_type=None):
         self.env = self.env = tictactoe_v3.env(render_mode=render_type, screen_height=600)
-        self.env.reset()
+        super().create_env()

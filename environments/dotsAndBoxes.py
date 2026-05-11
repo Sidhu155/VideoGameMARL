@@ -63,7 +63,7 @@ class DotsAndBoxes(Environment):
     
     def create_env(self, render_type: str | None = None):
         self.env = DotsAndBoxesEnvironment(render_type, self.num_agents, self.board_length)
-        self.env.reset()
+        super().create_env()
 
 class DotsAndBoxesEnvironment(AECEnv):
     """
@@ -128,18 +128,28 @@ class DotsAndBoxesEnvironment(AECEnv):
     }
 
     def __init__(self, render_mode=None, num_agents: int = 2, board_length: int = 5):
+        """
+        Args:
+            render_mode: A string representing how the game will be rendered. Can be None
+            num_agents: Number of agents interacting with the environment
+            board_length: Dimensions of the board. How many dots per row and column of the board.
+            
+        Initalise the environment
+        """
+
         self.possible_agents = ["player_" + str(i) for i in range(num_agents)]
         self.render_mode = render_mode
         self.board_length = board_length
+
+        #Board Size represents the number of horizontal and vertical lines on the board.
+        #E.g A board length of 5 indicates 4 horizontal lines per row with 5 rows.
+        #Also indicates 5 vertical lines per row with 4 rows.
         self.board_size = 2 * (self.board_length - 1) * self.board_length
-
-        
         self.board = np.ones((self.board_size,), dtype=np.int8)
-
-
 
     def reset(self, seed = None, options = None):
         self.board = np.ones((self.board_size,), dtype=np.int8)
+        #Filled squares indicates which squares have been completed.
         self.filled_squares = np.full(((self.board_length - 1), (self.board_length - 1)), 4, dtype=np.int8)
 
         self.agents = self.possible_agents[:]
@@ -149,28 +159,34 @@ class DotsAndBoxesEnvironment(AECEnv):
         self.truncations = {agent: False for agent in self.agents}
         self.infos = {agent: {} for agent in self.agents}
         
-        self.num_moves = 0
+        self.num_moves = 0      #Used to indicate when an episode has finished
         self._agent_selector = AgentSelector(self.agents)
         self.agent_selection = self._agent_selector.next()
     
-    def step(self, action):
+    def step(self, action: int):
         if (self.terminations[self.agent_selection] or self.truncations[self.agent_selection]):
             self._was_dead_step(action)
             return
         
         self.rewards = {agent: 0 for agent in self.agents}
         
+        #Check action possible
         assert self.board[action] == 1, "Invalid action selected"
         self.board[action] = 0
 
         agent = self.agent_selection
         self._cumulative_rewards[agent] = 0
 
+        #Calculate rewards by updating filled_squares and checking if any changed square is 0.
         reward_agent = 0
         midpoint = int(self.board_size/2)
+
+        #If action is less than midpoint, agent added vertical line, if more horizontal.
+        #Get row and column of line first then check the squares it has affected.
         if action < midpoint:
             row = int(action/self.board_length)
             col = action % self.board_length
+            #Check if vertical line is on either left or right edge of the board before checking for square.
             if (col != 0):
                 self.filled_squares[row][col - 1] -= 1
                 if self.filled_squares[row][col - 1] == 0:
@@ -182,6 +198,7 @@ class DotsAndBoxesEnvironment(AECEnv):
         else:
             row = int((action - midpoint)/(self.board_length - 1))
             col = (action - midpoint)%(self.board_length - 1)
+            #Check if horizontal line is on top or bottom of board.
             if (row != 0):
                 self.filled_squares[row - 1][col] -= 1
                 if self.filled_squares[row - 1][col] == 0:
@@ -191,10 +208,14 @@ class DotsAndBoxesEnvironment(AECEnv):
                 if self.filled_squares[row][col] == 0:
                     reward_agent += 1
 
+        #If no squares have been changed, continue.
+        #Else update all agents and their rewards.
         if reward_agent == 0:
             self.agent_selection = self._agent_selector.next()
         else:
             self.rewards[agent] = reward_agent
+            #If the agent was the player, negatively reward all adversaries
+            #Else negatively reward player.
             if self.agents.index(agent) == 0:
                 for agent_idx in range(1, len(self.agents)):
                     self.rewards[self.agents[agent_idx]] = -1 * reward_agent
@@ -202,6 +223,7 @@ class DotsAndBoxesEnvironment(AECEnv):
                 self.rewards[self.agents[0]] = -1 * reward_agent
             self._accumulate_rewards()
         
+        #Check if all lines have been added. If so terminate.
         self.num_moves += 1
         if self.num_moves >= self.board_size:
             self.terminations = {agent: True for agent in self.agents}
@@ -214,9 +236,13 @@ class DotsAndBoxesEnvironment(AECEnv):
             return
         else:
             midpoint = int(self.board_size/2)
+
+            #Print first row of dots and horizontal lines.
             print('.' + '.'.join(
                 ('_' if hor_line == 0 else ' ' for hor_line in self.board[midpoint:midpoint + self.board_length - 1])
                 ) + '.')
+            
+            #Print all other rows. These can include vertical lines too.
             for i in range(self.board_length - 1):
                 if self.board[self.board_length * i] == 0:
                     string = '|'
@@ -236,13 +262,13 @@ class DotsAndBoxesEnvironment(AECEnv):
                 print(string)
             print()
     
-    def observe(self, agent):
+    def observe(self, agent: str):
         return {
             "observation": np.copy(self.board),
             "action_mask": self._get_mask(agent)
         }
     
-    def observation_space(self, agent):
+    def observation_space(self, agent: str) -> Dict:
         return Dict(
             {
                 "observation": Box(
@@ -252,10 +278,10 @@ class DotsAndBoxesEnvironment(AECEnv):
             }
         )
     
-    def action_space(self, agent):
+    def action_space(self, agent: str) -> Discrete:
         return Discrete(self.board_size, dtype=np.int8)
     
-    def _get_mask(self, agent):
+    def _get_mask(self, agent: str) -> np.ndarray:
         # Per the documentation, the mask of any agent other than the
         # currently selected one is all zeros.
         if agent == self.agent_selection:
