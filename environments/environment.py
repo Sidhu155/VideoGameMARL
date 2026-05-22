@@ -56,8 +56,8 @@ class Environment:
             if termination or truncation:
                 obs = None
                 action = None
-                agent.final(rewards[agent_idx])         #Update agent logs with cumulative rewards
                 agent.update(reward, obs, action)
+                agent.final(rewards[agent_idx])         #Update agent logs with cumulative rewards
             else:
                 if agent.obs_abstraction:
                     agent_obs = self.get_abstract_obs(agent_idx, obs)

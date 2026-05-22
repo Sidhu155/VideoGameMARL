@@ -12,5 +12,5 @@ class ConnectFour(Environment):
     """
 
     def create_env(self, render_type=None):
-        self.env = self.env = connect_four_v3.env(render_mode=render_type, screen_scaling=7)
+        self.env = connect_four_v3.env(render_mode=render_type, screen_scaling=7)
         super().create_env()

@@ -1,7 +1,6 @@
 import sys
 import warnings
 from argparse import ArgumentParser, Namespace
-from gymnasium import Space
 from file import writeToFile, loadFromFile, get_file_path
 from environments.environment import Environment
 from environments import connectfour, tictactoe, dotsAndBoxes
@@ -23,13 +22,13 @@ def parse(args: list[str] | None = None) -> Namespace:
     parser.add_argument("environment", type=str)
     parser.add_argument("-p", "--player", dest="playerAgent", default="randAgent")
     parser.add_argument("-a", "--adversary", nargs='*', dest="adversaryAgent", default=["randAgent"])
-    parser.add_argument("-n", "--numtrain", dest="numTrain", type=int, default=1000)
+    parser.add_argument("-n", "--numtrain", dest="numTrain", type=int, default=10000)
     parser.add_argument("-w", "--numwatch", dest="numWatch", type=int, default=0)
     parser.add_argument("-x", "--numplay", dest="numPlay", type=int, default=0)
     parser.add_argument("-o:p", "--outfile-player")
     parser.add_argument("-o:a", "--outfile-adversary", nargs='*', default=[])
     parser.add_argument("-o:e", "--outfile-env")
-    parser.add_argument("-l", "--learn-watch-play", action="store_true")
+    parser.add_argument("-l:p", "--learn-play", action="store_true")
     parser.add_argument("-d:p", "--disable-player-learn", action="store_true")
     parser.add_argument("-d:a", "--disable-adversary-learn", action="store_true")
     parser.add_argument("-abs:o", "--abstraction-observation", nargs='*', type=int, default=[])
@@ -153,23 +152,17 @@ def match_args(args) -> tuple:
         index += 1
 
     #Check non-negative train, watch and play
-    if args.numTrain < 0:
-        raise Exception("Number of games for training cannot be negative")
-    
-    if args.numWatch < 0:
-        raise Exception("Number of games for watching cannot be negative")
-    
-    if args.numPlay < 0:
-        raise Exception("Number of games for play cannot be negative")
+    if args.numTrain < 0 or args.numWatch < 0 or args.numPlay < 0:
+        raise Exception("Number of games cannot be negative")
     
     return (environment, player, tuple(adversaries), args.numTrain, args.numWatch, args.numPlay,
             args.outfile_player, args.outfile_adversary, args.outfile_env, 
-            args.learn_watch_play, args.disable_player_learn, args.disable_adversary_learn)
+            args.learn_play, args.disable_player_learn, args.disable_adversary_learn)
 
 def main(args: list[str] | None =  None):
     (environment, player, adversaries, numTrain, numWatch, numPlay,
     outfile_player, outfile_adversary, outfile_env, 
-    learn_watch_play, disable_player_learn, disable_adversary_learn) = match_args(parse(args))
+    learn_play, disable_player_learn, disable_adversary_learn) = match_args(parse(args))
 
     #When match_args creates any agent, learning is enabled by default.
     #Here if specified by the user, learning can be disabled for players and adversaries throughout main process.
@@ -183,14 +176,7 @@ def main(args: list[str] | None =  None):
     print("Training...")
     environment.runNumGames((player, *adversaries), numTrain)
 
-    #If learning is specified as false during watch and play period, disable all learning
-    if not learn_watch_play:
-        player.disableLearning()
-        for adversary in adversaries:
-            adversary.disableLearning()
-
     environment.enable_rendering()
-
     #Watching period
     print("Watching...")
     environment.runNumGames((player, *adversaries), numWatch)
@@ -198,10 +184,15 @@ def main(args: list[str] | None =  None):
     #If outfile specified save player agent.
     if outfile_player: writeToFile(player, outfile_player, 'p') 
     #Swap to playerAgent and set up action space
-    temp_action_space = player.action_space
-    player = PlayerAgent()
-    player.set_up(temp_action_space)
+    temp_player = PlayerAgent(player.obs_abstraction, player.action_abstraction)
+    temp_player.set_up(player.action_space, player.observation_space)
+    player = temp_player
     
+    #If learning is specified as false during play period, disable adversarial learning
+    if not learn_play:
+        for adversary in adversaries:
+            adversary.disableLearning()
+
     #Playing period
     print("Playing...")
     environment.runNumGames((player, *adversaries), numPlay)

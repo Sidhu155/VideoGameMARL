@@ -13,14 +13,20 @@ class DotsAndBoxes(Environment):
         super().__init__()
         self.agent_names = ["player_" + str(i) for i in range(num_agents)]
 
-    def get_abstract_obs(self, agent_idx, obs):
-        ret_obs = np.zeros(5, dtype=np.int8)
+    def get_abstract_obs(self, agent_idx: int, obs: np.ndarray) -> np.ndarray:
+        #Create an array where indexes represent the number of lines remaining in a square to fill it
+        #and the integers at the indexes represent the number of boxes with those lines remaining.
+        #e.g. [0, 5, 3, 6, 1] indicates 0 boxes are filled, 5 boxes have one line remaining, 3 boxes
+        #have 2 lines remaining...
+        ret_obs = np.zeros(5, dtype=np.int8) 
         for x in np.nditer(self.env.filled_squares):
             ret_obs[x] += 1
         return ret_obs
     
-    def convert_abstract_action(self, agent_idx, obs, mask, abstracted_action):
+    def convert_abstract_action(self, agent_idx: int, obs: np.ndarray, 
+                                mask: np.ndarray, abstracted_action: int) -> int:
         midpoint = self.board_length * (self.board_length - 1)
+        #Priority indicates how boxes with different number of lines should be prioritised.
         if abstracted_action == 0:
             priority = [4, 3, 1, 2]
         elif abstracted_action == 1:
@@ -28,12 +34,14 @@ class DotsAndBoxes(Environment):
         elif abstracted_action == 2:
             priority = [3, 4, 2, 1]
         
-
+        #Check the environment's filled squares for boxes with number of lines remaining equal to
+        #prior. If there are boxes, break, otherwise check next prior.
         for prior in priority:
             indices = np.argwhere(self.env.filled_squares == prior)
             if len(indices) > 0:
                 break
 
+        #Choose random box from indices. Get row and column and get indexes of remaining lines in box
         index = np.random.choice(indices.shape[0])
         row = indices[index][0]
         col = indices[index][1]
@@ -46,7 +54,7 @@ class DotsAndBoxes(Environment):
         actions = list(idx for idx in idxes if obs[idx] == 1)
         return random.choice(actions)
 
-    def get_abstract_mask(self, agent_idx, mask):
+    def get_abstract_mask(self, agent_idx: int, mask: np.ndarray) -> np.ndarray:
         return np.ones(3, dtype=np.int8)
     
     def get_observation_space(self, idx: int, abstract: bool) -> list:
@@ -149,7 +157,8 @@ class DotsAndBoxesEnvironment(AECEnv):
 
     def reset(self, seed = None, options = None):
         self.board = np.ones((self.board_size,), dtype=np.int8)
-        #Filled squares indicates which squares have been completed.
+        #Filled squares indicates which squares have been completed. 4 indicates all lines remaining
+        #0 indicates all lines have been drawn and so the square is finished.
         self.filled_squares = np.full(((self.board_length - 1), (self.board_length - 1)), 4, dtype=np.int8)
 
         self.agents = self.possible_agents[:]
@@ -262,7 +271,7 @@ class DotsAndBoxesEnvironment(AECEnv):
                 print(string)
             print()
     
-    def observe(self, agent: str):
+    def observe(self, agent: str) -> dict:
         return {
             "observation": np.copy(self.board),
             "action_mask": self._get_mask(agent)

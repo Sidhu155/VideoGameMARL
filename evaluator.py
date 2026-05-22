@@ -74,17 +74,7 @@ class Evaluator:
         ]
 
         for plot in plots:
-            plt.title(plot["title"])
-            plt.xlabel(plot["xlabel"])
-            plt.ylabel(plot["ylabel"])
-            for logger, name in zip(agent_loggers, names):
-                if logger.hasKeyInLogs(plot["logger_param"]):
-                    #Convert logs into array with float type. Float prevents issues with infinities
-                    #when calculating mean
-                    log = np.array(logger.getLogs(plot["logger_param"]), dtype=np.float32)
-                    self.plotMovingAverage(log, name)
-                    self.writeLogToCSV(name, plot["logger_param"], log)
-            self.saveResult(plot["filename"])
+            self.plot(agent_loggers, names, **plot)
 
         plt.title("Proportion of Actions Taken")
         plt.xlabel("Action")
@@ -119,18 +109,9 @@ class Evaluator:
             {"title": "Moving Average of Memory Usage per Episode", "logger_param": "mem_run",
              "xlabel": "Episode Number", "ylabel": "Average Memory Usage (MB)", "filename": "mem-per-episode"},
         ]
+
         for plot in plots:
-            plt.title(plot["title"])
-            plt.xlabel(plot["xlabel"])
-            plt.ylabel(plot["ylabel"])
-            for logger, name in zip(env_loggers, names):
-                if logger.hasKeyInLogs(plot["logger_param"]):
-                    #Convert logs into array with float type. Float prevents issues with infinities
-                    #when calculating mean
-                    log = np.array(logger.getLogs(plot["logger_param"]), dtype=np.float32)
-                    self.plotMovingAverage(log, name)
-                    self.writeLogToCSV(name, plot["logger_param"], log)
-            self.saveResult(plot["filename"])
+            self.plot(env_loggers, names, **plot)
 
         plt.title("Moving Average of Time per Iteration")
         plt.xlabel("Episode Number")
@@ -143,6 +124,32 @@ class Evaluator:
                 self.writeLogToCSV(name, "time_per_iter", log)
         self.saveResult("time-per-iteration")
     
+    def plot(self, loggers: list[Logger], names: list[str], title: str, 
+             xlabel: str, ylabel: str, logger_param: str, filename: str) -> None:
+        """
+        Args:
+            loggers: A list of Logger objects
+            names: A list of names corresponding to each logger object
+            title: A title for the plot
+            xlabel: A label for the x-axis
+            ylabel: A label for the y-axis
+            logger_param: The key in the logger to get logs from
+            filename: The name of the file to save the plot under
+            
+        Plot a graph and save the figure based on loggers provided
+        """
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        for logger, name in zip(loggers, names):
+            if logger.hasKeyInLogs(logger_param):
+                #Convert logs into array with float type. Float prevents issues with infinities
+                #when calculating mean
+                log = np.array(logger.getLogs(logger_param), dtype=np.float32)
+                self.plotMovingAverage(log, name)
+                self.writeLogToCSV(name, logger_param, log)
+        self.saveResult(filename)
+
     def saveResult(self, filename: str) -> None:
         """
         Args:
