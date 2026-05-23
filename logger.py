@@ -5,10 +5,10 @@ class Logger:
     to produce plots and data and compare between different objects.
     """
 
-    allowed_keys = set(
-        ('get_action', 'update', 'record', 'training_error', 'history_actions',      #agents
-        'num_iterations', 'num_states', 'run', 'mem_run')                            #environments
-    )
+    allowed_keys = [
+        'get_action', 'update', 'record', 'training_error', 'history_actions',      #agents
+        'num_iterations', 'num_states', 'run', 'mem_run'                            #environments
+    ]
     
     def __init__(self):
         """
@@ -78,10 +78,10 @@ class Logger:
 
     @staticmethod
     def get_default_keys() -> set[str]:
-        return set(
-            ('get_action', 'update', 'record', 'training_error', 'history_actions',      #agents
-            'num_iterations', 'num_states', 'run', 'mem_run')                            #environments
-        )
+        return [
+            'get_action', 'update', 'record', 'training_error', 'history_actions',      #agents
+            'num_iterations', 'num_states', 'run', 'mem_run'                            #environments
+        ]
 
     @classmethod
     def set_allowed_keys(cls, new_keys: list[str]):
