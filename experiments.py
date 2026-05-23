@@ -11,16 +11,21 @@ from agents.randomAgent import RandomAgent
 from evaluator import Evaluator
 from logger import Logger
 
+default_seed = 15
+default_num_games = 1000000
+
 def convertStringToAgent(string, **kwargs) -> Agent:
     match string:
-        case "qtab":
+        case "qTab":
             return QTabAgent(**kwargs)
-        case "sarsatab":
+        case "sarsaTab":
             return SARSATabAgent(**kwargs)
-        case "qfunc":
+        case "qFunc":
             return QFuncApproxAgent(**kwargs)
-        case "sarsafunc":
+        case "sarsaFunc":
             return SARSAFuncApproxAgent(**kwargs)
+        case "randAgent":
+            return RandomAgent(**kwargs)
         
 def convertStringToEnv(string) -> Environment:
     match string:
@@ -31,81 +36,27 @@ def convertStringToEnv(string) -> Environment:
         case "dotsandboxes":
             return dotsAndBoxes.DotsAndBoxes(num_agents=2, board_length=5)
         
-def optimisationExperiments():
+def agent_against_agent_experiment(players: list[str], adversaries: list[str], envs: list[str], 
+                abstract_player_obs: bool, abstract_player_action: bool,
+                abstract_adversary_obs: bool, abstract_adversary_action: bool,
+                results_dir: str, allowed_keys: list[str] | None = None):
     
-    agents: list[(Agent, Agent)] = [
-        (QTabAgent(), QTabAgent()),
-        (SARSATabAgent(), SARSATabAgent()),
-        (QFuncApproxAgent(), QFuncApproxAgent()),
-        (SARSAFuncApproxAgent(), SARSAFuncApproxAgent())
-    ]
-    names = ['qtab', 'sarsatab', 'qfunc', 'sarsafunc']
-    env_loggers = []
-    pla_loggers = []
-    adv_loggers = []
-
-    for player, adversary in agents:
-        env = dotsAndBoxes.DotsAndBoxes(2, 5)
-        player.set_up(env.get_action_space(0, False), env.get_observation_space(0, False), seed=15)
-        adversary.set_up(env.get_action_space(1, False), env.get_observation_space(1, False), seed=15)
-        env.runNumGames((player, adversary), 10000)
-
-        env_loggers.append(env.logger)
-        pla_loggers.append(player.logger)
-        adv_loggers.append(adversary.logger)
-
-
-    evaluator = Evaluator(make_results_path('optimenv'), 0.05)
-    evaluator.plotEnvironments(env_loggers, names)
-    evaluator = Evaluator(make_results_path('optimpla'), 0.05)
-    evaluator.plotAgents(pla_loggers, names)
-    evaluator = Evaluator(make_results_path('optimadv'), 0.05)
-    evaluator.plotAgents(adv_loggers, names)
-
-def AgentsAgainstRandomExperiment():
-    agents = ['qtab', 'sarsatab', 'qfunc', 'sarsafunc']
-    envs = ['tictactoe', 'connectfour', 'dotsandboxes']
-
-    for env_name in envs:
-        env_loggers = []
-        adv_loggers = []
-        env = convertStringToEnv(env_name)
-        player = RandomAgent()
-        player.logger.disableLogging()
-        player.set_up(env.get_action_space(0, False), env.get_observation_space(0, False), seed=15)
-        for adversary_name in agents:
-            adversary = convertStringToAgent(adversary_name)
-            adversary.set_up(env.get_action_space(1, False), env.get_observation_space(1, False), seed=15)
-            env.runNumGames((player, adversary), 1000000)
-
-            env_loggers.append(env.logger)
-            adv_loggers.append(adversary.logger)
-            env.logger = Logger()
-            env.tear_down()
-            env.create_env()
-        
-        env_path = make_results_path('against-random/' + env_name + '/env')
-        adv_path = make_results_path('against-random/' + env_name + '/adv')
-        evaluator = Evaluator(env_path, 0.05)
-        evaluator.plotEnvironments(env_loggers, agents)
-        evaluator = Evaluator(adv_path, 0.05)
-        evaluator.plotAgents(adv_loggers, agents)
-
-def AgentsAgainstAgentsExperiment():
-    agents = ['qtab', 'sarsatab', 'qfunc', 'sarsafunc']
-    envs = ['tictactoe', 'connectfour', 'dotsandboxes']
+    if allowed_keys is not None:
+        Logger.set_allowed_keys(allowed_keys)
 
     for env_name in envs:
         env = convertStringToEnv(env_name)
-        for player_name in agents:
+        for player_name in players:
             env_loggers = []
             adv_loggers = []
-            for adversary_name in agents:
+            for adversary_name in adversaries:
                 player = convertStringToAgent(player_name)
-                player.set_up(env.get_action_space(0, False), env.get_observation_space(0, False), seed=15)
+                player.set_up(env.get_action_space(0, abstract_player_action), 
+                              env.get_observation_space(0, abstract_player_obs), seed=default_seed)
                 adversary = convertStringToAgent(adversary_name)
-                adversary.set_up(env.get_action_space(1, False), env.get_observation_space(1, False), seed=15)
-                env.runNumGames((player, adversary), 1000000)
+                adversary.set_up(env.get_action_space(1, abstract_adversary_action), 
+                                 env.get_observation_space(1, abstract_adversary_obs), seed=default_seed)
+                env.runNumGames((player, adversary), default_num_games)
 
                 env_loggers.append(env.logger)
                 adv_loggers.append(adversary.logger)
@@ -113,89 +64,32 @@ def AgentsAgainstAgentsExperiment():
                 env.tear_down()
                 env.create_env()
 
-            path = '/'.join(('against-agents', env_name, player_name))
+            path = '/'.join((results_dir, env_name, player_name))
             env_path = make_results_path(path + '/env')
             adv_path = make_results_path(path + '/adv')
             evaluator = Evaluator(env_path, 0.05)
-            evaluator.plotEnvironments(env_loggers, agents)
+            evaluator.plotEnvironments(env_loggers, adversaries)
             evaluator = Evaluator(adv_path, 0.05)
-            evaluator.plotAgents(adv_loggers, agents)
+            evaluator.plotAgents(adv_loggers, adversaries)
 
-def AbstractAgentsAgainstRandomExperiment():
-    agents = ['qtab', 'sarsatab', 'qfunc', 'sarsafunc']
-    envs = ['dotsandboxes']
-
-    for env_name in envs:
-        env_loggers = []
-        adv_loggers = []
-        env = convertStringToEnv(env_name)
-        player = RandomAgent()
-        player.logger.disableLogging()
-        player.set_up(env.get_action_space(0, False), env.get_observation_space(0, False), seed=15)
-        for adversary_name in agents:
-            adversary = convertStringToAgent(adversary_name, action_abstraction=True, obs_abstraction=True)
-            adversary.set_up(env.get_action_space(1, False), env.get_observation_space(1, False), seed=15)
-            env.runNumGames((player, adversary), 1000000)
-
-            env_loggers.append(env.logger)
-            adv_loggers.append(adversary.logger)
-            env.logger = Logger()
-            env.tear_down()
-            env.create_env()
-        
-        env_path = make_results_path('abstract-against-random/' + env_name + '/env')
-        adv_path = make_results_path('abstract-against-random-abstract/' + env_name + '/adv')
-        evaluator = Evaluator(env_path, 0.05)
-        evaluator.plotEnvironments(env_loggers, agents)
-        evaluator = Evaluator(adv_path, 0.05)
-        evaluator.plotAgents(adv_loggers, agents)
-
-def AbstractAgentsAgainstAgentsExperiment():
-    agents = ['qtab', 'sarsatab', 'qfunc', 'sarsafunc']
-    envs = ['dotsandboxes']
-
-    for env_name in envs:
-        env = convertStringToEnv(env_name)
-        for player_name in agents:
-            env_loggers = []
-            adv_loggers = []
-            for adversary_name in agents:
-                player = convertStringToAgent(player_name, action_abstraction=True, obs_abstraction=True)
-                player.set_up(env.get_action_space(0, False), env.get_observation_space(0, False), seed=15)
-                adversary = convertStringToAgent(adversary_name, action_abstraction=True, obs_abstraction=True)
-                adversary.set_up(env.get_action_space(1, False), env.get_observation_space(1, False), seed=15)
-                env.runNumGames((player, adversary), 1000000)
-
-                env_loggers.append(env.logger)
-                adv_loggers.append(adversary.logger)
-                env.logger = Logger()
-                env.tear_down()
-                env.create_env()
-
-            path = '/'.join(('abstract-against-agents', env_name, player_name))
-            env_path = make_results_path(path + '/env')
-            adv_path = make_results_path(path + '/adv')
-            evaluator = Evaluator(env_path, 0.05)
-            evaluator.plotEnvironments(env_loggers, agents)
-            evaluator = Evaluator(adv_path, 0.05)
-            evaluator.plotAgents(adv_loggers, agents)
+    Logger.reset_allowed_keys()
         
 def main(args):
-    random.seed(15)
-    np.random.seed(15)
-    AgentsAgainstRandomExperiment()
+    against_random = {
+        "players": ["randAgent"],
+        "adversaries": ["qFunc", "qTab", "sarsaFunc", "sarsaTab", "randAgent"],
+        "envs": ["tictactoe", "connectfour", "dotsandboxes"],
+        "abstract_player_obs": False,
+        "abstract_player_action": False,
+        "abstract_adversary_obs": False,
+        "abstract_adversary_action": False,
+        "results_dir": "against-random"
+    }
 
-    random.seed(15)
-    np.random.seed(15)
-    AgentsAgainstAgentsExperiment()
+    random.seed(default_seed)
+    np.random.seed(default_seed)
+    agent_against_agent_experiment(**against_random)
 
-    random.seed(15)
-    np.random.seed(15)
-    AbstractAgentsAgainstRandomExperiment()
-
-    random.seed(15)
-    np.random.seed(15)
-    AbstractAgentsAgainstAgentsExperiment()
 
 if __name__ == '__main__':
     main(sys.argv[1:])
