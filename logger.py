@@ -5,16 +5,16 @@ class Logger:
     to produce plots and data and compare between different objects.
     """
 
+    allowed_keys = set(
+        ('get_action', 'update', 'record', 'training_error', 'history_actions',      #agents
+        'num_iterations', 'num_states', 'run', 'mem_run')                            #environments
+    )
+    
     def __init__(self):
         """
         Initialises a dictionary of strings to lists and enables logging.
         The strings are the keys to the logs and the lists are the logs themselves.
         """
-
-        self.allowed_keys = [
-            'get_action', 'update', 'record', 'training_error', 'history_actions',      #agents
-            'num_iterations', 'num_states', 'run', 'mem_run'                            #environments
-        ]
         self.dict_lists = {}
         self.logging = True
 
@@ -28,7 +28,7 @@ class Logger:
         """
 
         #Check if logging is enabled and if the key is in allowed_keys.
-        if self.logging and key in self.allowed_keys:
+        if self.logging and self.keyAllowed(key):
             if self.hasKeyInLogs(key):
                 self.dict_lists[key].append(val)
             else:
@@ -75,6 +75,21 @@ class Logger:
 
     def resetLogger(self) -> None:
         self.dict_lists = {}
+
+    @staticmethod
+    def get_default_keys() -> set[str]:
+        return set(
+            ('get_action', 'update', 'record', 'training_error', 'history_actions',      #agents
+            'num_iterations', 'num_states', 'run', 'mem_run')                            #environments
+        )
+
+    @classmethod
+    def set_allowed_keys(cls, new_keys: list[str]):
+        cls.allowed_keys = new_keys
+
+    @classmethod
+    def reset_allowed_keys(cls):
+        cls.allowed_keys = cls.get_default_keys()
 
     
 

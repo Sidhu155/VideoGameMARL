@@ -28,11 +28,17 @@ def parse(args: list[str] | None = None) -> Namespace:
     parser.add_argument("-o:p", "--outfile-player")
     parser.add_argument("-o:a", "--outfile-adversary", nargs='*', default=[])
     parser.add_argument("-o:e", "--outfile-env")
-    parser.add_argument("-l:p", "--learn-play", action="store_true")
+    parser.add_argument("-l:p", "--learn-play", action="store_true", 
+                        help='Allow adversary to learn and update when you ' \
+                        'are playing against it')
     parser.add_argument("-d:p", "--disable-player-learn", action="store_true")
     parser.add_argument("-d:a", "--disable-adversary-learn", action="store_true")
-    parser.add_argument("-abs:o", "--abstraction-observation", nargs='*', type=int, default=[])
-    parser.add_argument("-abs:a", "--abstraction-action", nargs='*', type=int, default=[])
+    parser.add_argument("-abs:o", "--abstraction-observation", nargs='*', type=int, default=[],
+                        help='Specify agent indices for observation abstraction. Player is 0, ' \
+                        'first adversary is 1, second adversary is 2, etc.')
+    parser.add_argument("-abs:a", "--abstraction-action", nargs='*', type=int, default=[], 
+                        help='Specify agent indices for action abstraction. Player is 0, ' \
+                        'first adversary is 1, second adversary is 2, etc.')
     return parser.parse_args(args)
 
 def match_env(arg: str, num_agents: int, bool_save: bool):
