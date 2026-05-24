@@ -1,7 +1,7 @@
 import sys
 import random
 import numpy as np
-from file import writeToFile, loadFromFile, get_file_path, make_results_path
+from file import make_results_path
 from environments.environment import Environment
 from environments import tictactoe, connectfour, dotsAndBoxes
 from agents.agent import Agent
@@ -12,8 +12,8 @@ from evaluator import Evaluator
 from logger import Logger
 
 default_seed = 15
-default_num_games = 1000000
-default_pretrain_num_games = 4000000
+default_num_games = 100000
+default_pretrain_num_games = 500000
 
 def convertStringToAgent(string, **kwargs) -> Agent:
     match string:
@@ -40,10 +40,7 @@ def convertStringToEnv(string) -> Environment:
 def agent_against_agent_experiment(players: list[str], adversaries: list[str], envs: list[str], 
                 abstract_player_obs: bool, abstract_player_action: bool,
                 abstract_adversary_obs: bool, abstract_adversary_action: bool,
-                results_dir: str, allowed_keys: list[str] | None = None):
-    
-    if allowed_keys is not None:
-        Logger.set_allowed_keys(allowed_keys)
+                results_dir: str):
 
     player_kwargs = {"obs_abstraction": abstract_player_obs, "action_abstraction": abstract_player_action}
     adv_kwargs = {"obs_abstraction": abstract_adversary_obs, "action_abstraction": abstract_adversary_action}
@@ -79,17 +76,11 @@ def agent_against_agent_experiment(players: list[str], adversaries: list[str], e
             evaluator = Evaluator(adv_path, 0.05)
             evaluator.plotAgents(adv_loggers, adversaries)
 
-    if allowed_keys is not None:
-        Logger.reset_allowed_keys()
-
 def pretrained_agent_against_agent_experiment(players: list[str], adversaries: list[str], envs: list[str], 
                 abstract_player_obs: bool, abstract_player_action: bool,
                 abstract_adversary_obs: bool, abstract_adversary_action: bool,
-                results_dir: str, allowed_keys: list[str] | None = None):
+                results_dir: str):
     
-    if allowed_keys is not None:
-        Logger.set_allowed_keys(allowed_keys)
-
     player_kwargs = {"obs_abstraction": abstract_player_obs, "action_abstraction": abstract_player_action}
     adv_kwargs = {"obs_abstraction": abstract_adversary_obs, "action_abstraction": abstract_adversary_action}
 
@@ -111,9 +102,12 @@ def pretrained_agent_against_agent_experiment(players: list[str], adversaries: l
 
             env.logger.disableLogging()
             env.runNumGames((player, temp_adversary), default_pretrain_num_games)
+            del temp_adversary
+
             env.tear_down()
             env.create_env()
             env.logger.enableLogging()
+
             player.disableLearning()
 
             for adversary_name in adversaries:
@@ -136,11 +130,12 @@ def pretrained_agent_against_agent_experiment(players: list[str], adversaries: l
             evaluator.plotEnvironments(env_loggers, adversaries)
             evaluator = Evaluator(adv_path, 0.05)
             evaluator.plotAgents(adv_loggers, adversaries)
-
-    if allowed_keys is not None:
-        Logger.reset_allowed_keys()
         
 def main(args):
+    allowed_keys = Logger.get_default_keys()
+    allowed_keys.remove('mem_run')
+    Logger.set_allowed_keys(allowed_keys)
+
     against_agents= {
         "players": ["randAgent", "qFunc", "qTab", "sarsaFunc", "sarsaTab"],
         "adversaries": ["qFunc", "qTab", "sarsaFunc", "sarsaTab", "randAgent"],
