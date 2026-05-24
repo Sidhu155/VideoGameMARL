@@ -14,11 +14,11 @@ class FuncApprox(BaseQValAgent):
     def __init__(
         self,
         learning_rate: float = 1e-3,
-        epsilon: float = 1e-1,
-        learning_decay: float = 1e-8,
-        epsilon_decay: float = 1e-6,
+        epsilon: float = 2e-1,
+        learning_decay: float = 1e-9,
+        epsilon_decay: float = 2e-7,
         final_learning_rate: float = 1e-4,
-        final_epsilon: float = 1e-2,
+        final_epsilon: float = 2e-2,
         discount_factor: float = 0.95,
         obs_abstraction: bool = False,
         action_abstraction: bool = False
