@@ -205,11 +205,20 @@ def get_parsed_args(args) -> tuple:
     """
 
     parser = ArgumentParser()
-    parser.add_argument("type", choices=["environment", "player", "adversary"])
-    parser.add_argument("-o", "--objects", nargs='+', type=str)
-    parser.add_argument("-n", "--names", nargs='*', type=str, default=[])
-    parser.add_argument("-d", "--destination", default="res", type=str)
-    parser.add_argument("-w", "--window-ratio", default="0.05", type=float)
+    parser.add_argument("type", choices=["environment", "player", "adversary"], 
+                        help='Choose what type of objects to compare data for. Supported choices are ' \
+                        'environment, player and adversary. These decide what subdirectories of the ' \
+                        'saved_objects folder to look under.')
+    parser.add_argument("-o", "--objects", nargs='+', type=str, help='Specify the filenames for the ' \
+                        'objects that are being compared. Must have at least one.')
+    parser.add_argument("-n", "--names", nargs='*', type=str, default=[], help='Specify list of names to give ' \
+                        'compared objects in graphs and data. If names are not provided, the filenames are used ' \
+                        'instead.')
+    parser.add_argument("-d", "--destination", default="res", type=str, help='Specify subdirectory to ' \
+                        'add results to. If the subdirectory already exists, the destination name will ' \
+                        'be incremented until there is one available.')
+    parser.add_argument("-w", "--window-ratio", default="0.05", type=float, help='Specify moving average window ' \
+                        'ratio. This determines the size of the rolling window relative to the amount of data.')
     parsed_args = parser.parse_args(args)
     
     if parsed_args.window_ratio <= 0:

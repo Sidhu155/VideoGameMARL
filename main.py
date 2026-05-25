@@ -19,20 +19,38 @@ def parse(args: list[str] | None = None) -> Namespace:
     """
 
     parser = ArgumentParser()
-    parser.add_argument("environment", type=str)
-    parser.add_argument("-p", "--player", dest="playerAgent", default="randAgent")
-    parser.add_argument("-a", "--adversary", nargs='*', dest="adversaryAgent", default=["randAgent"])
-    parser.add_argument("-n", "--numtrain", dest="numTrain", type=int, default=10000)
-    parser.add_argument("-w", "--numwatch", dest="numWatch", type=int, default=0)
-    parser.add_argument("-x", "--numplay", dest="numPlay", type=int, default=0)
-    parser.add_argument("-o:p", "--outfile-player")
-    parser.add_argument("-o:a", "--outfile-adversary", nargs='*', default=[])
-    parser.add_argument("-o:e", "--outfile-env")
+    parser.add_argument("environment", type=str, help='Specify environment type. tictactoe, ' \
+                        'connectfour and dotsandboxes are supported. Can also select saved environment')
+    parser.add_argument("-p", "--player", dest="playerAgent", default="randAgent",
+                        help='Specify player agent. qFunc, qTab, sarsaFunc, sarsaTab, randAgent and ' \
+                        'playerAgent are supported. Can also select saved player agent. Defaults to randAgent')
+    parser.add_argument("-a", "--adversary", nargs='*', dest="adversaryAgent", default=["randAgent"], 
+                        help='Specify adversary agents. Many adversaries can be specified if environment is ' \
+                        'compatible e.g. dotsandboxes. qFunc, qTab, sarsaFunc, sarsaTab, randAgent and ' \
+                        'playerAgent are supported. Can also select saved adversary agents. Defaults to one randAgent')
+    parser.add_argument("-n", "--numtrain", dest="numTrain", type=int, default=10000,
+                        help='Specify number of games to train agents for. Default is 10000')
+    parser.add_argument("-w", "--numwatch", dest="numWatch", type=int, default=0,
+                        help='Specify number of games where agents train in human-rendered environment. ' \
+                        'Default is 0')
+    parser.add_argument("-x", "--numplay", dest="numPlay", type=int, default=0,
+                        help='Specify number of games to play against adversary agents for. Default is 0')
+    parser.add_argument("-o:p", "--outfile-player", help='Select a filename to save player agent. Can ' \
+                        'be loaded in other main calls or in evaluator. Saved in saved_objects directory ' \
+                        'by default but can be configured in file.py')
+    parser.add_argument("-o:a", "--outfile-adversary", nargs='*', default=[], help='Select filenames to save' \
+                        ' adversary agents under. Can ' \
+                        'be loaded in other main calls or in evaluator. Saved in saved_objects directory ' \
+                        'by default but can be configured in file.py')
+    parser.add_argument("-o:e", "--outfile-env", help='Select a filename to save environment. Can ' \
+                        'be loaded in other main calls or in evaluator. Saved in saved_objects directory ' \
+                        'by default but can be configured in file.py')
     parser.add_argument("-l:p", "--learn-play", action="store_true", 
-                        help='Allow adversary to learn and update when you ' \
-                        'are playing against it')
-    parser.add_argument("-d:p", "--disable-player-learn", action="store_true")
-    parser.add_argument("-d:a", "--disable-adversary-learn", action="store_true")
+                        help='Allow adversary to learn and update during play sessions')
+    parser.add_argument("-d:p", "--disable-player-learn", action="store_true", help='Prevent player from' \
+                        'from learning during train and watch sessions')
+    parser.add_argument("-d:a", "--disable-adversary-learn", action="store_true", help='Prevent adversaries' \
+                        'from learning during train and watch sessions')
     parser.add_argument("-abs:o", "--abstraction-observation", nargs='*', type=int, default=[],
                         help='Specify agent indices for observation abstraction. Player is 0, ' \
                         'first adversary is 1, second adversary is 2, etc.')
