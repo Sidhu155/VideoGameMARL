@@ -26,6 +26,8 @@ pip install -r requirements.txt
 
 ## Training
 
+Agents can be trained directly through the command line by calling the main file. They can be trained with or without rendering and subsequently player against by inputting actions into the command line. Multiple adversaries, observation and action abstractions and saving/loading of agents and environments is supported.
+
 To train agents:
 
 ```bash
@@ -42,7 +44,7 @@ All options are listed below. These can also be seen by calling `python3 main.py
 |   -w   | Specifies number of games to watch agents play against agents |
 |   -x   | Specifies number of games to play against adversarial agent |
 |   -p   | Select a player Agent type e.g. qTab, sarsaFunc. Can also load a saved agent |
-|   -a   | Select adversary Agents. Multiple adversaries supported by compatible environments (dotsandboxes) |
+|   -a   | Select adversary Agents. Multiple adversaries are supported by compatible environments (dotsandboxes) |
 |  -o:p  | Save player to saved_objects directory |
 |  -o:a  | Save adversaries to saved_objects directory |
 |  -o:e  | Save environment to saved_objects directory |
@@ -73,6 +75,8 @@ python3 main.py dotsandboxes -p qfunc -a sarsatab sarsatab sarsatab -w 123456789
 
 ## Evaluating
 
+The evaluator file can be called from the command line or used as an object in other modules in order to provide representations and comparisons of logs maintained by agents and environments. The most common way to use it is by training and saving agents and/or environments and then using the evaluator to create graphs and csv files based on their logs.
+
 To evaluate data for players, adversaries and environments respectively:
 ```bash
 python3 evaluator.py player -o {filename1} {filename2} {filename3} ...
@@ -93,6 +97,8 @@ Options for the evalutor are listed here. These can also be seen by calling `pyt
 All results by default are stored in the results directory. This can be configured in file.py
 
 ## Experimenting
+
+There are several experiments listed in the experiments file that were carried out during the project. These experiments are intended to evaluate the performance of different RL agents in different circumstances, both in terms of efficiency and effectiveness.
 
 To perform the existing experiments:
 
