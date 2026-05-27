@@ -1,11 +1,13 @@
-# VideoGame MARL
+# Video-Game MARL
 
 This project is designed to provide an accessible, easy to use framework with which RL agents can
 be trained in Multi-Agent scenarios. Q-Learning and SARSA agents in both Tabular and Function Approximation forms are provided and any PettingZoo environment can be used within this framework. Custom environments using the PettingZoo API are also acceptable; the DotsAndBoxes environment acts as an example implementation.
 
+The project has been implemented and tested on MacOS but should function on Linux and Windows (through WSL)
+
 ## Installation
 
-Ensure python is installed.
+Ensure python3 is installed.
 Create a virtual environment:
 
 ```bash 
